@@ -1,3 +1,40 @@
 {
-  "badges": []
+  "badges": [
+    {
+      "name": "cat linux.txt",
+      "code": "terminaled",
+      "image": "https://assets.tryhackme.com/img/badges/linux.png",
+      "category": "foundations"
+    },
+    {
+      "name": "First Four",
+      "code": "first-4-rooms",
+      "image": "https://assets.tryhackme.com/img/badges/firstfour.png",
+      "category": "milestones"
+    },
+    {
+      "name": "Metasploitable",
+      "code": "metasploitable",
+      "image": "https://assets.tryhackme.com/img/badges/metasploit.png",
+      "category": "red-teaming"
+    },
+    {
+      "name": "Networking Nerd",
+      "code": "network-fundamentals",
+      "image": "https://assets.tryhackme.com/img/badges/networkfundamentals.png",
+      "category": "foundations"
+    },
+    {
+      "name": "Pentesting Principles",
+      "code": "intro-to-pentesting",
+      "image": "https://assets.tryhackme.com/img/badges/introtooffensivesecurity.png",
+      "category": "red-teaming"
+    },
+    {
+      "name": "Webbed",
+      "code": "web-fund",
+      "image": "https://assets.tryhackme.com/img/badges/webbed.png",
+      "category": "foundations"
+    }
+  ]
 }

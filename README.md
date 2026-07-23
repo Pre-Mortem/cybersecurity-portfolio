@@ -7,27 +7,32 @@ A practical record of my cybersecurity training, TryHackMe progress, lab work an
 
 **Profile:** [PreMortem](https://tryhackme.com/p/PreMortem)  
 **Completed rooms recorded:** 16  
-**Badges recorded:** 0  
-**Last local sync:** 2026-07-23T11:19:01+00:00
+**Badges recorded:** 6  
+**Last local sync:** 2026-07-23T11:26:47+00:00
 
 ### Recently Completed Rooms
 
 | Room | Difficulty | Completed |
 |---|---|---|
-| [Linux Fundamentals Part 1](https://tryhackme.com/room/linuxfundamentalspart1) | — | 2026-07-23 |
-| [DNS in Detail](https://tryhackme.com/room/dnsindetail) | — | 2026-07-23 |
-| [What is Networking?](https://tryhackme.com/room/whatisnetworking) | — | 2026-07-23 |
-| [Intro to LAN](https://tryhackme.com/room/introtolan) | — | 2026-07-23 |
-| [Walking An Application](https://tryhackme.com/room/walkinganapplication) | — | 2026-07-23 |
-| [Pentesting Fundamentals](https://tryhackme.com/room/pentestingfundamentals) | — | 2026-07-23 |
-| [Principles of Security](https://tryhackme.com/room/principlesofsecurity) | — | 2026-07-23 |
-| [Metasploit: Exploitation](https://tryhackme.com/room/metasploitexploitation) | — | 2026-07-23 |
-| [Content Discovery](https://tryhackme.com/room/contentdiscovery) | — | 2026-07-23 |
-| [Subdomain Enumeration](https://tryhackme.com/room/subdomainenumeration) | — | 2026-07-23 |
+| [Linux Fundamentals Part 1](https://tryhackme.com/room/linuxfundamentalspart1) | Easy | 2026-07-23 |
+| [DNS in Detail](https://tryhackme.com/room/dnsindetail) | Easy | 2026-07-23 |
+| [What is Networking?](https://tryhackme.com/room/whatisnetworking) | Easy | 2026-07-23 |
+| [Intro to LAN](https://tryhackme.com/room/introtolan) | Easy | 2026-07-23 |
+| [Walking An Application](https://tryhackme.com/room/walkinganapplication) | Easy | 2026-07-23 |
+| [Pentesting Fundamentals](https://tryhackme.com/room/pentestingfundamentals) | Easy | 2026-07-23 |
+| [Principles of Security](https://tryhackme.com/room/principlesofsecurity) | Easy | 2026-07-23 |
+| [Metasploit: Exploitation](https://tryhackme.com/room/metasploitexploitation) | Easy | 2026-07-23 |
+| [Content Discovery](https://tryhackme.com/room/contentdiscovery) | Easy | 2026-07-23 |
+| [Subdomain Enumeration](https://tryhackme.com/room/subdomainenumeration) | Easy | 2026-07-23 |
 
 ### Badges
 
-- No badges recorded yet
+- cat linux.txt
+- First Four
+- Metasploitable
+- Networking Nerd
+- Pentesting Principles
+- Webbed
 
 This section is generated locally from my authenticated TryHackMe profile. Browser cookies remain on my own computer and are excluded from Git.
 <!-- THM:END -->

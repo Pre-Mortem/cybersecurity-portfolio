@@ -170,7 +170,6 @@ def browser_sync(args) -> int:
     BROWSER_STATE.mkdir(parents=True, exist_ok=True)
     profile_url = "https://tryhackme.com/p/PreMortem"
     discovered_rooms: list[dict] = []
-    discovered_badges: list[dict] = []
 
     with sync_playwright() as playwright:
         context = playwright.chromium.launch_persistent_context(
@@ -211,15 +210,10 @@ def browser_sync(args) -> int:
                     if room:
                         discovered_rooms.append(room)
 
-        load_page(page, profile_url + "?tab=badges", "badges")
-        page.mouse.wheel(0, 5000)
-        page.wait_for_timeout(2000)
-        for item in scrape_cards(page, "img"):
-            text = re.sub(r"\s+", " ", item.get("text", "")).strip()
-            image = item.get("image", "")
-            if image and ("badge" in image.lower() or "badge" in text.lower()) and text:
-                discovered_badges.append({"name": text[:120], "image": image})
-        print(f"Found {len(discovered_badges)} badge candidates.", flush=True)
+        # Badges are collected separately and reliably by badge_sync.py against the
+        # authenticated /api/v2/users/badges endpoint. Scraping the badges tab here
+        # was unreliable (it found nothing and could hang closing the browser), so
+        # room collection no longer touches badge data.
         context.close()
 
     rooms_data = read_json(ROOMS, {"rooms": []})
@@ -233,9 +227,8 @@ def browser_sync(args) -> int:
             added.append(room)
     write_json(ROOMS, rooms_data)
 
-    badge_map = {slugify(item["name"]): item for item in discovered_badges if item.get("name")}
-    badges_data = {"badges": sorted(badge_map.values(), key=lambda item: item["name"].lower())}
-    write_json(BADGES, badges_data)
+    # Preserve badges recorded by badge_sync.py; room collection must not clobber them.
+    badges_data = read_json(BADGES, {"badges": []})
 
     profile = read_json(PROFILE, {})
     profile.update({
@@ -247,7 +240,7 @@ def browser_sync(args) -> int:
     write_json(PROFILE, profile)
     update_readme(render(profile, rooms_data, badges_data))
 
-    print(f"Found {len(discovered_rooms)} completed-room candidates and {len(discovered_badges)} badge candidates.")
+    print(f"Found {len(discovered_rooms)} completed-room candidates.")
     print(f"Added {len(added)} new room(s).")
     for room in added:
         print(f"  + {room['name']}")

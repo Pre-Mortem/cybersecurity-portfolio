@@ -16,7 +16,14 @@ from portfolio import (
     write_json,
 )
 
+# Validated against the live session (2026-07-23): the authoritative source is
+#   /api/v2/rooms/details?roomCode=<slug>  ->  {"status":"success","data":{"difficulty": "easy"|"info"|...}}
+# TryHackMe reports "info" for informational rooms (e.g. Careers in Cyber), which
+# is a real tier, not a missing value — so it is recognised here.
+ROOM_DETAILS_PATH = "/api/v2/rooms/details"
+
 KNOWN_DIFFICULTIES = {
+    "info": "Info",
     "easy": "Easy",
     "medium": "Medium",
     "hard": "Hard",
@@ -53,11 +60,51 @@ def find_difficulty(value) -> str:
     return ""
 
 
-def difficulty_from_page(page, captured_payloads: list) -> str:
-    for payload in reversed(captured_payloads):
-        found = find_difficulty(payload)
+def details_difficulty(payload) -> str:
+    """Read data.difficulty from a /api/v2/rooms/details success envelope."""
+    if not isinstance(payload, dict) or payload.get("status") != "success":
+        return ""
+    data = payload.get("data")
+    if isinstance(data, dict):
+        return normalise_difficulty(data.get("difficulty"))
+    return ""
+
+
+def difficulty_from_page(page, captured: list, slug: str) -> str:
+    # 1. Authoritative source: the room's own /api/v2/rooms/details response,
+    #    matched to THIS room's code so a sibling request (e.g. a "next room"
+    #    recommendation) can never leak the wrong difficulty.
+    slug_l = slug.lower()
+    for url, payload in reversed(captured):
+        if ROOM_DETAILS_PATH in url and f"roomcode={slug_l}" in url.lower():
+            found = details_difficulty(payload)
+            if found:
+                return found
+    for url, payload in reversed(captured):
+        if ROOM_DETAILS_PATH in url:
+            found = details_difficulty(payload)
+            if found:
+                return found
+
+    # 2. Fetch the details endpoint directly from within the page (inherits the
+    #    browser's session + anti-bot cookies that a bare request lacks).
+    try:
+        payload = page.evaluate(
+            """async (code) => {
+                try {
+                    const r = await fetch(`/api/v2/rooms/details?roomCode=${encodeURIComponent(code)}`,
+                        {credentials: 'include', headers: {accept: 'application/json'}});
+                    if (!(r.headers.get('content-type') || '').includes('json')) return null;
+                    return await r.json();
+                } catch (e) { return null; }
+            }""",
+            slug,
+        )
+        found = details_difficulty(payload)
         if found:
             return found
+    except Exception:
+        pass
 
     for selector in (
         "[data-testid*='difficulty' i]",
@@ -85,8 +132,8 @@ def difficulty_from_page(page, captured_payloads: list) -> str:
         return ""
 
     patterns = (
-        r"Difficulty\s*[:\n-]?\s*(Easy|Medium|Hard|Insane)\b",
-        r"\b(Easy|Medium|Hard|Insane)\s+Difficulty\b",
+        r"Difficulty\s*[:\n-]?\s*(Info|Easy|Medium|Hard|Insane)\b",
+        r"\b(Info|Easy|Medium|Hard|Insane)\s+Difficulty\b",
     )
     for pattern in patterns:
         match = re.search(pattern, body, re.IGNORECASE)
@@ -123,14 +170,14 @@ def sync_room_difficulties() -> int:
         page = context.pages[0] if context.pages else context.new_page()
 
         for index, room in enumerate(pending, start=1):
-            captured_payloads = []
+            captured = []
 
             def capture(response):
                 try:
                     if response.request.resource_type in {"xhr", "fetch"} and "tryhackme.com" in response.url:
                         content_type = response.headers.get("content-type", "")
                         if "json" in content_type:
-                            captured_payloads.append(response.json())
+                            captured.append((response.url, response.json()))
                 except Exception:
                     pass
 
@@ -139,7 +186,7 @@ def sync_room_difficulties() -> int:
             try:
                 page.goto(room["url"], wait_until="domcontentloaded", timeout=45000)
                 page.wait_for_timeout(2500)
-                difficulty = difficulty_from_page(page, captured_payloads)
+                difficulty = difficulty_from_page(page, captured, room.get("slug", ""))
             except Exception as exc:
                 print(f"  Could not read room: {exc}", flush=True)
                 difficulty = ""
