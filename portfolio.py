@@ -497,44 +497,162 @@ def build_evidence_section() -> str:
 
 # --- Hack The Box (future-ready, no invented data) -------------------------
 
-HTB_CATEGORIES = [
-    ("Machines", "machines"),
-    ("Sherlocks", "sherlocks"),
-    ("Challenges", "challenges"),
-    ("Academy modules", "academy_modules"),
-]
+def _htb_list(data: dict, section: str, field: str) -> list:
+    container = data.get(section)
+    if isinstance(container, dict) and isinstance(container.get(field), list):
+        return container[field]
+    return []
+
+
+def _htb_totals(data: dict) -> list[tuple[str, int]]:
+    """Ordered (label, count) pairs, keeping only categories that have data."""
+    pairs = [
+        ("Machines", _htb_list(data, "labs", "machines")),
+        ("Sherlocks", _htb_list(data, "labs", "sherlocks")),
+        ("Challenges", _htb_list(data, "labs", "challenges")),
+        ("Modules", _htb_list(data, "academy", "modules")),
+        ("Paths", _htb_list(data, "academy", "paths")),
+        ("Certifications", _htb_list(data, "academy", "certifications")),
+        ("Badges", _htb_list(data, "labs", "badges") + _htb_list(data, "academy", "badges")),
+    ]
+    return [(label, len(items)) for label, items in pairs if items]
+
+
+def _htb_machines_table(machines: list) -> str:
+    header = "| Machine | Difficulty | OS | Status | Completed |\n|---|---|---|---|---|"
+    rows = []
+    for machine in machines[:10]:
+        rows.append(
+            f"| {md_cell(machine.get('name'))} | {md_cell(machine.get('difficulty') or '—')} "
+            f"| {md_cell(machine.get('operating_system') or '—')} "
+            f"| {md_cell((machine.get('status') or '—').title())} "
+            f"| {md_cell(machine.get('completed_at') or '—')} |"
+        )
+    return header + "\n" + "\n".join(rows)
+
+
+def _htb_simple_table(items: list, first_header: str) -> str:
+    header = f"| {first_header} | Category | Difficulty | Completed |\n|---|---|---|---|"
+    rows = []
+    for item in items[:10]:
+        rows.append(
+            f"| {md_cell(item.get('name'))} | {md_cell(item.get('category') or '—')} "
+            f"| {md_cell(item.get('difficulty') or '—')} | {md_cell(item.get('completed_at') or '—')} |"
+        )
+    return header + "\n" + "\n".join(rows)
+
+
+def _htb_academy_table(modules: list, paths: list) -> str:
+    header = "| Module or Path | Type | Status | Completed |\n|---|---|---|---|"
+    rows = []
+    for path in paths[:6]:
+        rows.append(
+            f"| {md_cell(path.get('name'))} | Path | {md_cell((path.get('status') or 'completed').title())} "
+            f"| {md_cell(path.get('completed_at') or '—')} |"
+        )
+    for module in modules[:10]:
+        module_type = f"Module ({md_cell(module.get('tier'))})" if module.get("tier") else "Module"
+        rows.append(
+            f"| {md_cell(module.get('name'))} | {module_type} "
+            f"| {md_cell((module.get('status') or 'completed').title())} "
+            f"| {md_cell(module.get('completed_at') or '—')} |"
+        )
+    return header + "\n" + "\n".join(rows)
+
+
+def _htb_name_list(items: list) -> str:
+    return "\n".join(f"- {md_cell(item.get('name'))}" for item in items)
 
 
 def build_hackthebox_section() -> str:
+    """Render the Hack The Box section from data/hackthebox.json (new schema).
+
+    Only categories with recorded data are shown; unsupported/empty categories
+    never produce empty tables. All content is escaped and only http(s) links
+    are emitted. No flags, answers or protected solution content are rendered.
+    """
     data = read_optional_json(HACKTHEBOX, {})
     if not isinstance(data, dict):
         data = {}
 
-    counts = []
-    total = 0
-    for label, key in HTB_CATEGORIES:
-        value = data.get(key)
-        count = len(value) if isinstance(value, list) else 0
-        counts.append((label, count))
-        total += count
-    profile = safe_url(data.get("profile_url"))
+    identity = data.get("public_identity") if isinstance(data.get("public_identity"), dict) else {}
+    username = html.escape(str(identity.get("username") or "").strip())
+    profile_url = safe_url(identity.get("profile_url"))
+    totals = _htb_totals(data)
 
     header = "## Hack The Box\n\n"
-    if total == 0 and not profile:
+    if not totals and not username and not profile_url:
         return header + (
             "Hack The Box progress has not been added yet. This section will track "
             "Machines, Sherlocks, Challenges and Academy modules as they are completed."
         )
 
-    labels = " | ".join(label for label, _ in counts)
-    values = " | ".join(str(count) for _, count in counts)
-    table = (
-        f"| {labels} |\n"
-        f"|{'---|' * len(counts)}\n"
-        f"| {values} |"
+    parts = [header.rstrip("\n")]
+
+    # Identity + last sync line.
+    if profile_url and username:
+        identity_line = f"**Profile:** [{username}]({profile_url})"
+    elif profile_url:
+        identity_line = f"**Profile:** {profile_url}"
+    elif username:
+        identity_line = f"**Profile:** {username}"
+    else:
+        identity_line = ""
+    if identity_line:
+        parts.append(identity_line + "<br>\n**Last successful HTB sync:** "
+                     + format_sync_timestamp(data.get("synced_at")))
+    else:
+        parts.append("**Last successful HTB sync:** " + format_sync_timestamp(data.get("synced_at")))
+
+    rank = (data.get("labs") or {}).get("rank")
+    if rank:
+        parts.append(f"**Rank:** {html.escape(str(rank))}")
+
+    # Compact totals (centred), only populated categories.
+    cells = "\n".join(
+        f'<td align="center">&nbsp;<strong>{html.escape(label)}</strong>&nbsp;<br>{count}</td>'
+        for label, count in totals
     )
-    profile_line = f"**Profile:** {profile}\n\n" if profile else ""
-    return header + profile_line + table + "\n\n_Current recorded totals._"
+    parts.append(f'<div align="center">\n\n<table>\n<tr>\n{cells}\n</tr>\n</table>\n\n</div>')
+
+    machines = _htb_list(data, "labs", "machines")
+    if machines:
+        parts.append("### Recently Completed Machines\n\n" + _htb_machines_table(machines))
+
+    sherlocks = _htb_list(data, "labs", "sherlocks")
+    if sherlocks:
+        parts.append("### Sherlocks\n\n" + _htb_simple_table(sherlocks, "Sherlock"))
+
+    challenges = _htb_list(data, "labs", "challenges")
+    if challenges:
+        parts.append("### Challenges\n\n" + _htb_simple_table(challenges, "Challenge"))
+
+    modules = _htb_list(data, "academy", "modules")
+    paths = _htb_list(data, "academy", "paths")
+    if modules or paths:
+        parts.append("### Academy\n\n" + _htb_academy_table(modules, paths))
+
+    certifications = _htb_list(data, "academy", "certifications")
+    if certifications:
+        cert_lines = "\n".join(
+            f"- {md_cell(cert.get('name'))}" + (f" — {md_cell(cert.get('issued_at'))}" if cert.get("issued_at") else "")
+            for cert in certifications
+        )
+        parts.append("### Certifications\n\n" + cert_lines)
+
+    badges = _htb_list(data, "labs", "badges") + _htb_list(data, "academy", "badges")
+    if badges:
+        parts.append("### Badges\n\n" + _htb_name_list(badges))
+
+    achievements = data.get("achievements") if isinstance(data.get("achievements"), list) else []
+    if achievements:
+        parts.append("### Verified Achievements\n\n" + _htb_name_list(achievements))
+
+    parts.append(
+        "Achievement metadata only — no flags, answers or solution steps are published, "
+        "in line with Hack The Box content rules."
+    )
+    return "\n\n".join(parts)
 
 
 def render(profile: dict, rooms: dict, badges: dict) -> str:
@@ -757,20 +875,276 @@ def add_room(args):
     print(f"Added {name}")
 
 
+# --------------------------------------------------------------------------- #
+# Cybersecurity Portfolio Sync Engine
+# --------------------------------------------------------------------------- #
+
+PLATFORM_KEYS = ("tryhackme", "hackthebox")
+
+# Files the automated commit flow is ever allowed to stage. Browser profiles,
+# diagnostics, caches and temp files are deliberately excluded.
+PUBLISH_ALLOWLIST = ("README.md", "data", "writeups")
+
+# Patterns that must never appear inside tracked data files.
+FORBIDDEN_DATA_PATTERNS = re.compile(
+    r"password|passwd|bearer|authorization|session[_-]?id|flag\{|htb\{|thm\{|user\.txt|root\.txt|-----BEGIN",
+    re.IGNORECASE,
+)
+
+
+class PlatformOutcome:
+    """Lightweight per-platform result used by the sync engine."""
+
+    def __init__(self, name: str, ok: bool, message: str, counts=None):
+        self.name = name
+        self.ok = ok
+        self.message = message
+        self.counts = counts or {}
+
+
+def regenerate_readme() -> None:
+    """Regenerate the README from saved, validated local data only."""
+    profile = read_json(PROFILE, {})
+    rooms = read_json(ROOMS, {"rooms": []})
+    badges = read_json(BADGES, {"badges": []})
+    update_readme(render(profile, rooms, badges))
+
+
+def sync_tryhackme_platform() -> PlatformOutcome:
+    """Run the existing TryHackMe pipeline (rooms -> difficulty -> badges)."""
+    try:
+        import room_sync
+        import room_difficulty_sync
+        import badge_sync
+    except ImportError as exc:
+        return PlatformOutcome("TryHackMe", False, f"TryHackMe modules unavailable: {exc}")
+
+    try:
+        before = len(read_json(ROOMS, {"rooms": []}).get("rooms", []))
+        room_sync.sync_rooms()
+        room_difficulty_sync.sync_room_difficulties()
+        badge_sync.sync_badges(publish=False)
+        rooms = read_json(ROOMS, {"rooms": []}).get("rooms", [])
+        badges = read_json(BADGES, {"badges": []}).get("badges", [])
+        counts = {"rooms": len(rooms), "badges": len(badges), "rooms_added": max(0, len(rooms) - before)}
+        return PlatformOutcome("TryHackMe", True, "TryHackMe sync complete.", counts)
+    except (SystemExit, Exception) as exc:  # noqa: BLE001 - report, do not crash the engine
+        return PlatformOutcome("TryHackMe", False, f"TryHackMe sync failed: {exc}")
+
+
+def sync_hackthebox_platform(interactive: bool) -> PlatformOutcome:
+    """Run the Hack The Box sync via the platform module."""
+    try:
+        from platforms import hackthebox
+    except ImportError as exc:
+        return PlatformOutcome("Hack The Box", False, f"Hack The Box module unavailable: {exc}")
+    result = hackthebox.sync(interactive=interactive)
+    return PlatformOutcome("Hack The Box", result.ok, result.message, result.counts)
+
+
+def _git_paths_staged() -> list[str]:
+    out = run_git("diff", "--cached", "--name-only", check=False)
+    return [line for line in out.stdout.splitlines() if line.strip()]
+
+
+def _privacy_and_safety_checks() -> list[str]:
+    """Return a list of problems that must block a commit (empty means safe)."""
+    problems = []
+    staged = _git_paths_staged()
+    for path in staged:
+        if re.search(r"(^|/)\.(thm|htb)-browser(/|$)", path) or ".htb-diagnostics" in path \
+                or ".htb-sync-cache" in path or path.endswith(".tmp"):
+            problems.append(f"refusing to stage local artefact: {path}")
+    # Scan staged data files for forbidden content.
+    for path in staged:
+        if path.startswith("data/") and path.endswith(".json"):
+            full = ROOT / path
+            if full.exists() and FORBIDDEN_DATA_PATTERNS.search(full.read_text(encoding="utf-8")):
+                problems.append(f"forbidden pattern found in tracked data file: {path}")
+    return problems
+
+
+def publish_changes(commit_message: str) -> bool:
+    """Stage only allow-listed paths, run safety checks, commit and push."""
+    run_git("add", "--", *PUBLISH_ALLOWLIST)
+    staged = run_git("diff", "--cached", "--quiet", check=False)
+    if staged.returncode == 0:
+        print("No repository changes to publish.")
+        return False
+
+    problems = _privacy_and_safety_checks()
+    if problems:
+        run_git("reset", check=False)
+        print("Commit aborted by safety checks:")
+        for problem in problems:
+            print(f"  - {problem}")
+        return False
+
+    print("Staged files:")
+    for path in _git_paths_staged():
+        print(f"  {path}")
+
+    run_git("commit", "-m", commit_message)
+    run_git("push")
+    head = run_git("rev-parse", "HEAD").stdout.strip()
+    origin = run_git("rev-parse", "origin/main", check=False).stdout.strip()
+    if head and head == origin:
+        print("Pushed. HEAD matches origin/main.")
+    else:
+        print("Pushed, but HEAD/origin/main could not be confirmed equal.")
+    return True
+
+
+def _print_summary(requested, outcomes, changed_files):
+    succeeded = [o.name for o in outcomes if o.ok]
+    failed = [o.name for o in outcomes if not o.ok]
+    print("\n=== Sync summary ===")
+    print("Requested : " + ", ".join(requested))
+    print("Succeeded : " + (", ".join(succeeded) or "none"))
+    print("Failed    : " + (", ".join(failed) or "none"))
+    for outcome in outcomes:
+        detail = ", ".join(f"{k}={v}" for k, v in outcome.counts.items())
+        print(f"  - {outcome.name}: {outcome.message}" + (f" ({detail})" if detail else ""))
+    print("Files changed: " + (", ".join(changed_files) or "none"))
+
+
+def _confirm(prompt: str) -> bool:
+    try:
+        answer = input(prompt).strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        print()
+        return False
+    return answer in ("y", "yes")
+
+
+def run_sync(requested: list[str], interactive: bool, auto_push: bool) -> int:
+    """Run the requested platform syncs, regenerate the README, offer to publish.
+
+    Returns a process exit status: 0 if at least one requested platform
+    succeeded (or render-only), 1 if every requested sync failed.
+    """
+    outcomes = []
+    for platform in requested:
+        print(f"\n>>> Syncing {platform}...", flush=True)
+        if platform == "tryhackme":
+            outcomes.append(sync_tryhackme_platform())
+        elif platform == "hackthebox":
+            outcomes.append(sync_hackthebox_platform(interactive))
+
+    # Always regenerate from whatever valid saved data now exists.
+    try:
+        regenerate_readme()
+    except SystemExit as exc:
+        print(f"README regeneration failed: {exc}")
+
+    changed_files = [line.strip() for line in run_git("status", "--short", check=False).stdout.splitlines()]
+    _print_summary(requested, outcomes, changed_files)
+
+    any_ok = any(o.ok for o in outcomes)
+    should_push = auto_push or (interactive and any_ok and _confirm("\nCommit and push these changes? [y/N] "))
+    if should_push:
+        publish_changes("Sync portfolio activity")
+    elif not auto_push:
+        print("Not committing (no confirmation).")
+
+    return 0 if any_ok else 1
+
+
+def interactive_menu() -> int:
+    menu = (
+        "\nCybersecurity Portfolio Sync\n"
+        "1. TryHackMe\n"
+        "2. Hack The Box\n"
+        "3. Both platforms\n"
+        "4. Regenerate from saved data\n"
+        "5. Exit\n"
+    )
+    mapping = {
+        "1": ["tryhackme"],
+        "2": ["hackthebox"],
+        "3": ["tryhackme", "hackthebox"],
+    }
+    while True:
+        print(menu)
+        try:
+            choice = input("Select an option [1-5]: ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print("\nCancelled.")
+            return 0
+        if choice in mapping:
+            requested = mapping[choice]
+            print(f"\nSelected: {', '.join(requested)}. A browser may open for login.")
+            return run_sync(requested, interactive=True, auto_push=False)
+        if choice == "4":
+            try:
+                regenerate_readme()
+                print("README regenerated from saved data.")
+            except SystemExit as exc:
+                print(f"Regeneration failed: {exc}")
+                return 1
+            if _confirm("Commit and push the regenerated README? [y/N] "):
+                publish_changes("Regenerate portfolio README")
+            return 0
+        if choice == "5":
+            print("Exiting.")
+            return 0
+        print("Invalid selection. Please choose a number from 1 to 5.")
+
+
+def cmd_sync(args) -> int:
+    if args.platform:
+        if args.platform == "all":
+            requested = list(PLATFORM_KEYS)
+        else:
+            requested = [args.platform]
+        return run_sync(requested, interactive=not args.non_interactive, auto_push=args.push)
+    return interactive_menu()
+
+
+def cmd_render(args) -> int:
+    regenerate_readme()
+    print("README regenerated from saved data.")
+    if getattr(args, "push", False):
+        publish_changes("Regenerate portfolio README")
+    return 0
+
+
 def main():
-    parser = argparse.ArgumentParser(description="TryHackMe portfolio updater")
+    parser = argparse.ArgumentParser(description="Cybersecurity Portfolio Sync Engine")
     sub = parser.add_subparsers(dest="command", required=True)
-    sync_parser = sub.add_parser("browser-sync")
-    sync_parser.add_argument("--publish", action="store_true")
-    sync_parser.set_defaults(func=browser_sync)
+
+    sync_parser = sub.add_parser("sync", help="interactive multi-platform sync menu")
+    sync_parser.add_argument("--platform", choices=("tryhackme", "hackthebox", "all"),
+                             help="run a specific platform non-interactively (skips the menu)")
+    sync_parser.add_argument("--non-interactive", action="store_true",
+                             help="do not treat this as an interactive session")
+    sync_parser.add_argument("--push", action="store_true",
+                             help="commit and push after a successful sync (never pushes without this flag)")
+    sync_parser.set_defaults(func=cmd_sync)
+
+    render_parser = sub.add_parser("render", help="regenerate the README from saved data only")
+    render_parser.add_argument("--push", action="store_true")
+    render_parser.set_defaults(func=cmd_render)
+
+    # Preserved legacy commands so existing TryHackMe workflows keep working.
+    browser_parser = sub.add_parser("browser-sync")
+    browser_parser.add_argument("--publish", action="store_true")
+    browser_parser.set_defaults(func=browser_sync)
     room_parser = sub.add_parser("add-room")
     room_parser.add_argument("--name")
     room_parser.add_argument("--url")
     room_parser.add_argument("--difficulty")
     room_parser.add_argument("--completed")
     room_parser.set_defaults(func=add_room)
+
     args = parser.parse_args()
-    args.func(args)
+    try:
+        result = args.func(args)
+    except KeyboardInterrupt:
+        print("\nInterrupted.")
+        raise SystemExit(130)
+    if isinstance(result, int) and args.command in ("sync", "render"):
+        raise SystemExit(result)
 
 
 if __name__ == "__main__":

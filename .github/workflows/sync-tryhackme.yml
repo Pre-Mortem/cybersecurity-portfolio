@@ -16,16 +16,30 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Compile updater
-        run: python -m py_compile portfolio.py
+      - name: Compile modules
+        run: |
+          python -m py_compile \
+            portfolio.py \
+            room_sync.py \
+            badge_sync.py \
+            room_difficulty_sync.py \
+            platforms/__init__.py \
+            platforms/base.py \
+            platforms/hackthebox.py
+      - name: Run deterministic tests
+        # These tests never require a live account, browser or interactive login.
+        run: python -m unittest discover -s tests
       - name: Validate JSON data
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          for path in Path("data").glob("*.json"):
+          for path in sorted(Path("data").glob("*.json")):
               json.loads(path.read_text(encoding="utf-8"))
               print(f"valid: {path}")
           PY
       - name: Check private browser state is ignored
-        run: git check-ignore .thm-browser/test-cookie
+        run: |
+          git check-ignore .thm-browser/test-cookie
+          git check-ignore .htb-browser/test-cookie
+          git check-ignore .htb-diagnostics/test.png

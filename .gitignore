@@ -1,7 +1,11 @@
 config.json
 .venv/
 .thm-browser/
+.htb-browser/
+.htb-diagnostics/
+.htb-sync-cache/
 __pycache__/
 *.pyc
+*.tmp
 .DS_Store
 .playwright/

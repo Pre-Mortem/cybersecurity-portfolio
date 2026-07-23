@@ -1,7 +1,23 @@
 {
-  "profile_url": "",
-  "machines": [],
-  "sherlocks": [],
-  "challenges": [],
-  "academy_modules": []
+  "schema_version": 1,
+  "platform": "hackthebox",
+  "synced_at": null,
+  "public_identity": {
+    "username": "",
+    "profile_url": ""
+  },
+  "labs": {
+    "machines": [],
+    "sherlocks": [],
+    "challenges": [],
+    "badges": [],
+    "rank": null
+  },
+  "academy": {
+    "modules": [],
+    "paths": [],
+    "badges": [],
+    "certifications": []
+  },
+  "achievements": []
 }

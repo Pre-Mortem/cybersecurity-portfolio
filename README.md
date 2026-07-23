@@ -194,23 +194,91 @@ This section is generated locally from my authenticated TryHackMe profile. Brows
 
 ## About This Portfolio
 
-The sections above are generated locally by a small Python tool in this repository
-([portfolio.py](portfolio.py)) from validated JSON data, then written back into this
-README between the generated markers.
+The generated sections above are produced locally by the **Cybersecurity Portfolio
+Sync Engine** ([portfolio.py](portfolio.py)) from validated JSON data, then written
+back into this README between the generated markers. The renderer is kept separate
+from platform authentication and data extraction (in [`platforms/`](platforms)).
 
-TryHackMe activity is synced from my own authenticated profile. The updater uses a
-separate browser profile stored only in `.thm-browser/`, which holds login data, is
-excluded by `.gitignore`, and is never committed or shared.
+### Supported platforms
 
-To run the updater locally:
+- **TryHackMe** — completed rooms, room difficulty and badges.
+- **Hack The Box** — Labs (machines, Sherlocks, challenges, badges, rank) and Academy
+  (modules, paths, badges, certifications), plus public profile identity. Achievement
+  **metadata only**.
+
+### Running the sync menu
 
 ```bash
 git clone https://github.com/Pre-Mortem/cybersecurity-portfolio.git
 cd cybersecurity-portfolio
-chmod +x setup sync-tryhackme
+chmod +x setup sync-portfolio sync-tryhackme
 ./setup
-./sync-tryhackme
+./sync-portfolio
 ```
+
+The menu offers TryHackMe, Hack The Box, both, regenerate-from-saved-data, or exit.
+Non-interactive equivalents:
+
+```bash
+python portfolio.py sync --platform tryhackme
+python portfolio.py sync --platform hackthebox
+python portfolio.py sync --platform all
+python portfolio.py render          # regenerate README from saved data only
+```
+
+Nothing is ever committed automatically. After a sync the engine prints a summary and
+asks before committing; `--push` may be supplied explicitly for automation. If one
+platform fails, the other's data is kept and previously synced data is preserved.
+
+### Local browser sessions
+
+Each platform authenticates interactively in its own persistent browser profile:
+`.thm-browser/` for TryHackMe and `.htb-browser/` for Hack The Box. These hold login
+state, are excluded by `.gitignore`, and are never committed, logged or shared. To
+reset a Hack The Box login safely, simply delete `.htb-browser/` and sign in again on
+the next sync. Hack The Box uses a unified account, so login may redirect between the
+HTB Account, Labs and Academy and may prompt for 2FA — all handled manually by you in
+the browser.
+
+### What is collected
+
+Public achievement metadata only: item names, difficulty, category, operating system,
+active/retired status, completion or issue dates, badges and certifications, and the
+public username/profile URL.
+
+### What is never collected
+
+Passwords, email addresses, 2FA or recovery codes, access or bearer tokens, raw
+cookies, session/local storage, internal account IDs, avatars, machine or challenge
+flags, Sherlock or Academy answers, solution steps, or VPN configuration. In line with
+Hack The Box content rules, only *that* something was completed is published — never
+*how*. Write-up stubs are not generated for active HTB content.
+
+### Roadmap
+
+**Completed by this milestone**
+
+- Multi-platform selection menu
+- Hack The Box browser authentication
+- Hack The Box sync (Labs + Academy)
+- Unified rendering across platforms
+- Optional commit and push
+
+**Next milestone — Cisco Networking Academy** (not implemented here)
+
+- Dedicated `.cisco-browser` session
+- Course, badge, certificate and completion-date sync
+- Sanitised `data/cisco_netacad.json`
+- Platform-level privacy controls, with profile identity hidden by default where
+  possible
+
+### Limitations
+
+- Live login cannot run in CI: authentication is interactive and may require 2FA, so
+  the automated tests never depend on a live account. CI only runs the deterministic
+  unit tests, compiles the modules and validates JSON.
+- Hack The Box categories are synced only where the authenticated web app reliably
+  exposes them; anything not reliably retrievable is left empty rather than fabricated.
 
 **Repository rules**
 
