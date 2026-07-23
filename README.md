@@ -20,7 +20,7 @@ A practical record of my cybersecurity training, TryHackMe progress, lab work an
 
 - No badges recorded yet
 
-This section is generated locally from my authenticated TryHackMe profile. Browser cookies remain in my normal Chrome profile and are never copied into this repository.
+This section is generated locally from my authenticated TryHackMe profile. Browser cookies remain on my own computer and are excluded from Git.
 <!-- THM:END -->
 
 ## Using the Updater
@@ -32,35 +32,20 @@ git clone https://github.com/Pre-Mortem/cybersecurity-portfolio.git
 cd cybersecurity-portfolio
 chmod +x setup sync-tryhackme
 ./setup
-```
-
-Before syncing, fully quit Google Chrome with `Cmd+Q`. The updater uses the same Chrome profile you use every day, including its existing TryHackMe login.
-
-For the normal Chrome profile, run:
-
-```bash
 ./sync-tryhackme
 ```
 
-If your daily Chrome account is stored under another profile directory, run one of these instead:
-
-```bash
-CHROME_PROFILE_DIR="Profile 1" ./sync-tryhackme
-CHROME_PROFILE_DIR="Profile 2" ./sync-tryhackme
-```
-
-You can identify the active profile directory by opening `chrome://version` in your normal Chrome and checking **Profile Path**. The final folder name will usually be `Default`, `Profile 1`, `Profile 2`, and so on.
+The first sync opens a separate Chrome profile used only by this updater. Log into TryHackMe in that window and press Enter in Terminal. Later runs reuse that saved login without affecting your everyday Chrome profile, saved passwords or extensions.
 
 Each sync:
 
-- opens the selected daily Chrome profile
 - checks the authenticated TryHackMe profile for completed rooms and badges
 - compares them with the repository data
 - creates a safe write-up template for each newly detected room
 - regenerates this README
 - commits and pushes genuine changes
 
-Chrome must be completely closed before the command runs because Chrome prevents two processes from using the same profile at once.
+The updater's browser profile is stored locally in `.thm-browser/`. It contains login data, is excluded by `.gitignore`, and must never be committed or shared.
 
 ## Lab Notes
 
