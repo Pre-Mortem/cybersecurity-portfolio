@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import datetime as dt
+import html
 import json
 import re
 import subprocess
@@ -78,6 +79,40 @@ This entry contains learning notes only. Flags, credentials and direct room answ
 """, encoding="utf-8")
 
 
+BADGE_COLUMNS = 3
+
+
+def build_badge_showcase(badges: list) -> str:
+    """Return a GitHub-README-compatible HTML showcase of earned badges.
+
+    Each badge is rendered image-over-name in its own centred table cell, with
+    a fixed number of badges per row. Names are HTML-escaped. A badge without a
+    valid http(s) image falls back to its name as text (no broken image). The
+    showcase is generated entirely from the supplied data, so future badges
+    appear automatically.
+    """
+    cells = []
+    for badge in badges:
+        name = html.escape(str(badge.get("name") or "Badge"))
+        image = str(badge.get("image") or "").strip()
+        if image.lower().startswith(("http://", "https://")):
+            src = html.escape(image, quote=True)
+            inner = f'<img src="{src}" alt="{name}" width="100"><br>\n<strong>{name}</strong>'
+        else:
+            inner = f"<strong>{name}</strong>"
+        cells.append(f'<td align="center" width="130">\n{inner}\n</td>')
+
+    if not cells:
+        return "No badges recorded yet"
+
+    rows = []
+    for start in range(0, len(cells), BADGE_COLUMNS):
+        row = "\n".join(cells[start:start + BADGE_COLUMNS])
+        rows.append(f"<tr>\n{row}\n</tr>")
+    table = "<table>\n" + "\n".join(rows) + "\n</table>"
+    return f'<div align="center">\n\n{table}\n\n</div>'
+
+
 def render(profile: dict, rooms: dict, badges: dict) -> str:
     rows = []
     ordered = sorted(rooms["rooms"], key=lambda item: item.get("completed", ""), reverse=True)
@@ -89,12 +124,7 @@ def render(profile: dict, rooms: dict, badges: dict) -> str:
     if not rows:
         rows.append("| No rooms recorded yet | — | — |")
 
-    badge_lines = []
-    for badge in badges.get("badges", [])[:12]:
-        label = badge.get("name", "Badge").replace("|", "\\|")
-        badge_lines.append(f"- {label}")
-    if not badge_lines:
-        badge_lines.append("- No badges recorded yet")
+    badge_showcase = build_badge_showcase(badges.get("badges", []))
 
     return f"""{START}
 ## TryHackMe
@@ -112,7 +142,7 @@ def render(profile: dict, rooms: dict, badges: dict) -> str:
 
 ### Badges
 
-{chr(10).join(badge_lines)}
+{badge_showcase}
 
 This section is generated locally from my authenticated TryHackMe profile. Browser cookies remain on my own computer and are excluded from Git.
 {END}"""

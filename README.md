@@ -27,12 +27,40 @@ A practical record of my cybersecurity training, TryHackMe progress, lab work an
 
 ### Badges
 
-- cat linux.txt
-- First Four
-- Metasploitable
-- Networking Nerd
-- Pentesting Principles
-- Webbed
+<div align="center">
+
+<table>
+<tr>
+<td align="center" width="130">
+<img src="https://assets.tryhackme.com/img/badges/linux.png" alt="cat linux.txt" width="100"><br>
+<strong>cat linux.txt</strong>
+</td>
+<td align="center" width="130">
+<img src="https://assets.tryhackme.com/img/badges/firstfour.png" alt="First Four" width="100"><br>
+<strong>First Four</strong>
+</td>
+<td align="center" width="130">
+<img src="https://assets.tryhackme.com/img/badges/metasploit.png" alt="Metasploitable" width="100"><br>
+<strong>Metasploitable</strong>
+</td>
+</tr>
+<tr>
+<td align="center" width="130">
+<img src="https://assets.tryhackme.com/img/badges/networkfundamentals.png" alt="Networking Nerd" width="100"><br>
+<strong>Networking Nerd</strong>
+</td>
+<td align="center" width="130">
+<img src="https://assets.tryhackme.com/img/badges/introtooffensivesecurity.png" alt="Pentesting Principles" width="100"><br>
+<strong>Pentesting Principles</strong>
+</td>
+<td align="center" width="130">
+<img src="https://assets.tryhackme.com/img/badges/webbed.png" alt="Webbed" width="100"><br>
+<strong>Webbed</strong>
+</td>
+</tr>
+</table>
+
+</div>
 
 This section is generated locally from my authenticated TryHackMe profile. Browser cookies remain on my own computer and are excluded from Git.
 <!-- THM:END -->
