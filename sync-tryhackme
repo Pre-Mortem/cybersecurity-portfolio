@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+cd "$(dirname "$0")"
+if [ ! -x .venv/bin/python ]; then
+  printf 'Setup has not been run yet. Run: ./setup\n' >&2
+  exit 1
+fi
+. .venv/bin/activate
+python portfolio.py browser-sync --publish
