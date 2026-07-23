@@ -5,14 +5,17 @@ A practical record of my cybersecurity training, TryHackMe progress, lab work an
 <!-- THM:START -->
 ## TryHackMe
 
-The automatic TryHackMe section has not been configured yet.
+**Profile:** [PreMortem](https://tryhackme.com/p/PreMortem)  
+**Recorded rooms:** 0  
+**Automatic badge sync:** Waiting for the TryHackMe public user ID
 
-Run:
+The repository is connected to the correct public profile. The updater is ready to record completed rooms and generate safe write-up templates. The live TryHackMe profile card will be enabled once the numeric public user ID is extracted from TryHackMe's badge-sharing page.
 
-```bash
-python3 portfolio.py configure
-python3 portfolio.py sync
-```
+### Recently recorded rooms
+
+| Room | Difficulty | Completed |
+|---|---|---|
+| No rooms recorded yet | — | — |
 <!-- THM:END -->
 
 ## Lab Notes
