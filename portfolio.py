@@ -154,6 +154,13 @@ def scrape_cards(page, selector: str) -> list[dict]:
     })""")
 
 
+def load_page(page, url: str, label: str) -> None:
+    print(f"Loading {label}...", flush=True)
+    page.goto(url, wait_until="domcontentloaded", timeout=45000)
+    page.wait_for_timeout(3000)
+    print(f"Loaded {label}.", flush=True)
+
+
 def browser_sync(args) -> int:
     try:
         from playwright.sync_api import sync_playwright
@@ -173,25 +180,29 @@ def browser_sync(args) -> int:
             viewport={"width": 1440, "height": 1000},
         )
         page = context.pages[0] if context.pages else context.new_page()
-        page.goto(profile_url, wait_until="domcontentloaded", timeout=90000)
-        print("A separate Chrome window has opened for TryHackMe syncing.")
-        print("Log into TryHackMe there if required, then return here and press Enter.")
+        load_page(page, profile_url, "TryHackMe profile")
+        print("A separate Chrome window has opened for TryHackMe syncing.", flush=True)
+        print("Log into TryHackMe there if required, then return here and press Enter.", flush=True)
         input()
-        page.goto(profile_url, wait_until="networkidle", timeout=90000)
+        print("Continuing sync...", flush=True)
+        load_page(page, profile_url, "authenticated profile")
 
-        if "/login" in page.url.lower() or page.locator("text=Login").count() > 0 and "PreMortem" not in page.content():
+        page_text = page.locator("body").inner_text(timeout=10000)
+        if "/login" in page.url.lower() or ("Login" in page_text and "PreMortem" not in page_text):
             context.close()
             raise SystemExit("TryHackMe still appears logged out. Run ./sync-tryhackme again and complete login.")
 
-        for url in (
-            profile_url,
-            profile_url + "?tab=completed",
-            profile_url + "?tab=rooms",
-        ):
-            page.goto(url, wait_until="networkidle", timeout=90000)
+        room_pages = (
+            (profile_url, "profile rooms"),
+            (profile_url + "?tab=completed", "completed rooms"),
+            (profile_url + "?tab=rooms", "rooms tab"),
+        )
+        for url, label in room_pages:
+            load_page(page, url, label)
             page.mouse.wheel(0, 5000)
-            page.wait_for_timeout(1500)
+            page.wait_for_timeout(2000)
             candidates = scrape_cards(page, "a[href*='/room/']")
+            print(f"Found {len(candidates)} room links on {label}.", flush=True)
             for candidate in candidates:
                 text = candidate.get("text", "").lower()
                 if any(word in text for word in ("completed", "complete", "100%")) or "tab=completed" in url:
@@ -200,14 +211,15 @@ def browser_sync(args) -> int:
                     if room:
                         discovered_rooms.append(room)
 
-        page.goto(profile_url + "?tab=badges", wait_until="networkidle", timeout=90000)
+        load_page(page, profile_url + "?tab=badges", "badges")
         page.mouse.wheel(0, 5000)
-        page.wait_for_timeout(1500)
+        page.wait_for_timeout(2000)
         for item in scrape_cards(page, "img"):
             text = re.sub(r"\s+", " ", item.get("text", "")).strip()
             image = item.get("image", "")
             if image and ("badge" in image.lower() or "badge" in text.lower()) and text:
                 discovered_badges.append({"name": text[:120], "image": image})
+        print(f"Found {len(discovered_badges)} badge candidates.", flush=True)
         context.close()
 
     rooms_data = read_json(ROOMS, {"rooms": []})
