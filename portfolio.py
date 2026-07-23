@@ -16,11 +16,19 @@ CONFIG = ROOT / "config.example.json"
 ROOMS = ROOT / "data/rooms.json"
 PROFILE = ROOT / "data/profile.json"
 BADGES = ROOT / "data/badges.json"
+HACKTHEBOX = ROOT / "data/hackthebox.json"
+EVIDENCE = ROOT / "data/evidence.json"
 README = ROOT / "README.md"
 BROWSER_STATE = ROOT / ".thm-browser"
 START = "<!-- THM:START -->"
 END = "<!-- THM:END -->"
+# Outer markers delimiting the whole generated portfolio body. The TryHackMe
+# START/END markers stay nested inside this region so TryHackMe sync tooling is
+# unaffected.
+GEN_START = "<!-- PORTFOLIO:START -->"
+GEN_END = "<!-- PORTFOLIO:END -->"
 PROFILE_URL = "https://tryhackme.com/p/PreMortem"
+REPO_URL = "https://github.com/Pre-Mortem/cybersecurity-portfolio"
 
 
 def read_json(path: Path, default):
@@ -214,6 +222,321 @@ def build_milestones(room_count: int) -> str:
     return f'<div align="center">\n\n{table}\n\n</div>'
 
 
+def read_optional_json(path: Path, default):
+    """Load an optional JSON data file, tolerating a missing or malformed file."""
+    try:
+        if not path.exists():
+            return default
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return default
+
+
+def safe_url(url) -> str | None:
+    """Return the URL only if it is a plain http(s) link, else None."""
+    text = str(url or "").strip()
+    if text.lower().startswith(("http://", "https://")):
+        return text
+    return None
+
+
+def md_cell(value) -> str:
+    """Escape a value for safe use inside a Markdown table cell."""
+    return html.escape(str(value)).replace("|", "\\|").replace("\n", " ")
+
+
+# --- Qualifications (verified, static) -------------------------------------
+
+QUALIFICATIONS = [
+    {
+        "title": "Certificate in Cyber Security Practices — Level 3",
+        "reference": "603/5762/9",
+        "provider": "Think Employment",
+        "status": "In progress",
+    },
+]
+
+
+def build_qualification_section() -> str:
+    rows = "\n".join(
+        f"| {md_cell(q['title'])} | {md_cell(q['reference'])} | "
+        f"{md_cell(q['provider'])} | {md_cell(q['status'])} |"
+        for q in QUALIFICATIONS
+    )
+    return (
+        "## Qualifications\n\n"
+        "| Qualification | Reference | Provider | Status |\n"
+        "|---|---|---|---|\n"
+        f"{rows}\n\n"
+        "_Unit evidence, assignments and completed units will be added to this "
+        "repository as the course progresses._"
+    )
+
+
+# --- Security projects (verified) ------------------------------------------
+# Repository links are only included for repositories confirmed public. Private
+# or non-public repositories are labelled accordingly and left unlinked.
+
+PROJECTS = [
+    {
+        "name": "PacketPunch",
+        "description": (
+            "A modern open-source pentesting hardware and software platform "
+            "focused on current wireless, network and embedded security technologies."
+        ),
+        "areas": ["pentesting hardware", "wireless security", "network visibility",
+                  "embedded systems", "ESP32-P4"],
+        "status": "In development",
+        "repository": None,
+        "visibility": "Private",
+        "tagline": "Security tools with impact.",
+    },
+    {
+        "name": "ESP32-S2 AI HID Typer",
+        "description": (
+            "An ESP32-S2-based wireless HID keyboard system with an Android client, "
+            "dynamic device discovery, emergency stop controls and defensive input validation."
+        ),
+        "areas": ["embedded security", "USB HID", "ESP-IDF", "Android", "network discovery"],
+        "status": "In development",
+        "repository": None,           # verified PRIVATE on GitHub — no public link
+        "visibility": "Private",
+        "tagline": None,
+    },
+    {
+        "name": "Cybersecurity Portfolio Automation",
+        "description": (
+            "A Python-based portfolio generator that synchronises training progress, "
+            "badges and room difficulty data into a generated GitHub README."
+        ),
+        "areas": ["Python", "automation", "JSON", "GitHub", "data validation"],
+        "status": "Active",
+        "repository": REPO_URL,       # this repository (verified public)
+        "visibility": "Public",
+        "tagline": None,
+    },
+]
+
+
+def build_projects_section() -> str:
+    cards = []
+    for project in PROJECTS:
+        name = html.escape(project["name"])
+        url = safe_url(project.get("repository"))
+        heading = f"[{name}]({url})" if url else name
+        repo_label = f"{project['visibility']} repository"
+        lines = [
+            f"**{heading}** — _{html.escape(project['status'])} · {repo_label}_",
+            html.escape(project["description"]),
+            "**Focus:** " + " · ".join(html.escape(area) for area in project["areas"]),
+        ]
+        if project.get("tagline"):
+            lines.append(f"_{html.escape(project['tagline'])}_")
+        cards.append("<br>\n".join(lines))
+    body = "\n\n".join(cards)
+    return (
+        "## Security Projects\n\n"
+        "Practical security engineering across hardware, embedded systems and automation.\n\n"
+        f"{body}"
+    )
+
+
+# --- Skills matrix (evidence-backed) ---------------------------------------
+
+def _rooms_matching(rooms: dict, keywords) -> list:
+    names = []
+    for room in rooms.get("rooms", []):
+        low = str(room.get("name", "")).lower()
+        if any(keyword in low for keyword in keywords):
+            names.append(room.get("name", ""))
+    return names
+
+
+def _badge_name(badges: dict, code: str) -> str:
+    for badge in badges.get("badges", []):
+        if badge.get("code") == code:
+            return str(badge.get("name") or "")
+    return ""
+
+
+def build_skills_section(rooms: dict, badges: dict) -> str:
+    # Skills whose evidence is derived from live room/badge data.
+    room_skills = [
+        ("Networking", ("networking", "lan", "dns"), "network-fundamentals"),
+        ("Linux", ("linux",), "terminaled"),
+        ("Web security",
+         ("web", "walking an application", "content discovery", "subdomain",
+          "idor", "authentication bypass"),
+         "web-fund"),
+    ]
+    matrix = []
+    for label, keywords, badge_code in room_skills:
+        matched = _rooms_matching(rooms, keywords)
+        badge = _badge_name(badges, badge_code)
+        if matched:
+            evidence = "TryHackMe rooms: " + ", ".join(matched)
+            if badge:
+                evidence += f"; and the {badge} badge"
+        else:
+            evidence = "Developing through TryHackMe training"
+        matrix.append((label, evidence))
+
+    # Skills whose evidence is project/tooling based (verified in-repo or above).
+    matrix.extend([
+        ("Python",
+         "Portfolio generation and synchronisation scripts "
+         "(portfolio.py, badge_sync.py, room_sync.py, room_difficulty_sync.py)"),
+        ("Git and GitHub",
+         "Version-controlled, automatically generated portfolio with JSON data validated in CI"),
+        ("Embedded systems",
+         "ESP32-S2 AI HID Typer and PacketPunch development"),
+        ("Android",
+         "Developing through the ESP32-S2 AI HID Typer Android client"),
+        ("Security automation",
+         "Automated TryHackMe room, badge and difficulty synchronisation"),
+    ])
+
+    rows = "\n".join(f"| {md_cell(label)} | {md_cell(evidence)} |" for label, evidence in matrix)
+    return (
+        "## Skills and Evidence\n\n"
+        "Each skill below is tied to work recorded in this repository — completed "
+        "training, badges, projects or scripts. No self-rated scores are used.\n\n"
+        "| Skill area | Evidence |\n"
+        "|---|---|\n"
+        f"{rows}"
+    )
+
+
+# --- Practical labs and reports (evidence-driven) --------------------------
+
+EVIDENCE_GROUPS = [
+    ("Lab write-ups", "lab_writeups"),
+    ("Threat research", "threat_research"),
+    ("Incident analysis", "incident_analysis"),
+    ("Qualification work", "qualification_work"),
+    ("Security reports", "security_reports"),
+]
+
+
+def _read_title(path: Path) -> str:
+    try:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line.startswith("# "):
+                return line[2:].strip()
+    except OSError:
+        pass
+    return ""
+
+
+def _evidence_link(title: str, target: str) -> str:
+    label = html.escape(title)
+    url = safe_url(target)
+    if url:
+        return f"- [{label}]({url})"
+    # Otherwise treat as a repository-relative path that must actually exist.
+    candidate = (ROOT / target).resolve()
+    try:
+        candidate.relative_to(ROOT)
+    except ValueError:
+        return f"- {label}"
+    if candidate.exists():
+        rel = candidate.relative_to(ROOT).as_posix()
+        return f"- [{label}]({rel})"
+    return f"- {label}"
+
+
+def build_evidence_section() -> str:
+    groups = {label: [] for label, _ in EVIDENCE_GROUPS}
+
+    # Auto-discover lab write-ups that actually exist in the repository.
+    writeups_dir = ROOT / "writeups"
+    if writeups_dir.exists():
+        for path in sorted(writeups_dir.rglob("*.md")):
+            title = _read_title(path) or path.stem
+            rel = path.relative_to(ROOT).as_posix()
+            groups["Lab write-ups"].append(_evidence_link(title, rel))
+
+    # Merge an optional manifest of further evidence (validated file paths / links).
+    manifest = read_optional_json(EVIDENCE, {})
+    if isinstance(manifest, dict):
+        key_to_label = {key: label for label, key in EVIDENCE_GROUPS}
+        for key, label in key_to_label.items():
+            entries = manifest.get(key)
+            if not isinstance(entries, list):
+                continue
+            for entry in entries:
+                if not isinstance(entry, dict):
+                    continue
+                title = str(entry.get("title") or "").strip()
+                target = str(entry.get("path") or entry.get("url") or "").strip()
+                if title and target:
+                    groups[label].append(_evidence_link(title, target))
+
+    blocks = []
+    for label, _ in EVIDENCE_GROUPS:
+        items = groups[label]
+        if not items:
+            continue
+        listing = "\n".join(items)
+        if label == "Lab write-ups" and len(items) > 6:
+            blocks.append(
+                f"**{label}**\n\n"
+                f"<details>\n<summary>{len(items)} documents</summary>\n\n"
+                f"{listing}\n\n</details>"
+            )
+        else:
+            blocks.append(f"**{label}**\n\n{listing}")
+
+    header = "## Practical Labs and Reports\n\n"
+    if not blocks:
+        return header + "Practical reports and lab evidence will be added as work is completed."
+    intro = "Evidence drawn from documents that exist in this repository.\n\n"
+    return header + intro + "\n\n".join(blocks)
+
+
+# --- Hack The Box (future-ready, no invented data) -------------------------
+
+HTB_CATEGORIES = [
+    ("Machines", "machines"),
+    ("Sherlocks", "sherlocks"),
+    ("Challenges", "challenges"),
+    ("Academy modules", "academy_modules"),
+]
+
+
+def build_hackthebox_section() -> str:
+    data = read_optional_json(HACKTHEBOX, {})
+    if not isinstance(data, dict):
+        data = {}
+
+    counts = []
+    total = 0
+    for label, key in HTB_CATEGORIES:
+        value = data.get(key)
+        count = len(value) if isinstance(value, list) else 0
+        counts.append((label, count))
+        total += count
+    profile = safe_url(data.get("profile_url"))
+
+    header = "## Hack The Box\n\n"
+    if total == 0 and not profile:
+        return header + (
+            "Hack The Box progress has not been added yet. This section will track "
+            "Machines, Sherlocks, Challenges and Academy modules as they are completed."
+        )
+
+    labels = " | ".join(label for label, _ in counts)
+    values = " | ".join(str(count) for _, count in counts)
+    table = (
+        f"| {labels} |\n"
+        f"|{'---|' * len(counts)}\n"
+        f"| {values} |"
+    )
+    profile_line = f"**Profile:** {profile}\n\n" if profile else ""
+    return header + profile_line + table + "\n\n_Current recorded totals._"
+
+
 def render(profile: dict, rooms: dict, badges: dict) -> str:
     rows = []
     ordered = sorted(rooms["rooms"], key=lambda item: item.get("completed", ""), reverse=True)
@@ -230,7 +553,7 @@ def render(profile: dict, rooms: dict, badges: dict) -> str:
     milestones = build_milestones(len(rooms["rooms"]))
     last_sync = format_sync_timestamp(profile.get("last_sync"))
 
-    return f"""{START}
+    tryhackme = f"""{START}
 ## TryHackMe
 
 **Profile:** [PreMortem]({PROFILE_URL})<br>
@@ -259,13 +582,23 @@ _Portfolio progress milestones — a personal tracker, not official TryHackMe ba
 This section is generated locally from my authenticated TryHackMe profile. Browser cookies remain on my own computer and are excluded from Git.
 {END}"""
 
+    sections = [
+        build_qualification_section(),
+        build_projects_section(),
+        build_skills_section(rooms, badges),
+        build_evidence_section(),
+        build_hackthebox_section(),
+        tryhackme,
+    ]
+    return GEN_START + "\n" + "\n\n".join(sections) + "\n" + GEN_END
+
 
 def update_readme(section: str) -> None:
     text = README.read_text(encoding="utf-8")
-    pattern = re.compile(re.escape(START) + r".*?" + re.escape(END), re.DOTALL)
+    pattern = re.compile(re.escape(GEN_START) + r".*?" + re.escape(GEN_END), re.DOTALL)
     if not pattern.search(text):
-        raise SystemExit("README is missing TryHackMe generated markers")
-    README.write_text(pattern.sub(section, text), encoding="utf-8")
+        raise SystemExit("README is missing portfolio generated markers")
+    README.write_text(pattern.sub(lambda _match: section, text), encoding="utf-8")
 
 
 def normalise_room(raw: dict) -> dict | None:

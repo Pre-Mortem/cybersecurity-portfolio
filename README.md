@@ -1,6 +1,82 @@
 # Cybersecurity Portfolio
 
-A practical record of my cybersecurity training, TryHackMe progress, lab work and security engineering projects.
+A working record of my cybersecurity learning and practical development. It brings
+together formal qualification progress, security engineering projects, hands-on lab
+work and evidence-backed skills, alongside automatically generated training activity
+from TryHackMe.
+
+<!-- PORTFOLIO:START -->
+## Qualifications
+
+| Qualification | Reference | Provider | Status |
+|---|---|---|---|
+| Certificate in Cyber Security Practices — Level 3 | 603/5762/9 | Think Employment | In progress |
+
+_Unit evidence, assignments and completed units will be added to this repository as the course progresses._
+
+## Security Projects
+
+Practical security engineering across hardware, embedded systems and automation.
+
+**PacketPunch** — _In development · Private repository_<br>
+A modern open-source pentesting hardware and software platform focused on current wireless, network and embedded security technologies.<br>
+**Focus:** pentesting hardware · wireless security · network visibility · embedded systems · ESP32-P4<br>
+_Security tools with impact._
+
+**ESP32-S2 AI HID Typer** — _In development · Private repository_<br>
+An ESP32-S2-based wireless HID keyboard system with an Android client, dynamic device discovery, emergency stop controls and defensive input validation.<br>
+**Focus:** embedded security · USB HID · ESP-IDF · Android · network discovery
+
+**[Cybersecurity Portfolio Automation](https://github.com/Pre-Mortem/cybersecurity-portfolio)** — _Active · Public repository_<br>
+A Python-based portfolio generator that synchronises training progress, badges and room difficulty data into a generated GitHub README.<br>
+**Focus:** Python · automation · JSON · GitHub · data validation
+
+## Skills and Evidence
+
+Each skill below is tied to work recorded in this repository — completed training, badges, projects or scripts. No self-rated scores are used.
+
+| Skill area | Evidence |
+|---|---|
+| Networking | TryHackMe rooms: DNS in Detail, What is Networking?, Intro to LAN; and the Networking Nerd badge |
+| Linux | TryHackMe rooms: Linux Fundamentals Part 1; and the cat linux.txt badge |
+| Web security | TryHackMe rooms: Walking An Application, Content Discovery, Subdomain Enumeration, Authentication Bypass, IDOR; and the Webbed badge |
+| Python | Portfolio generation and synchronisation scripts (portfolio.py, badge_sync.py, room_sync.py, room_difficulty_sync.py) |
+| Git and GitHub | Version-controlled, automatically generated portfolio with JSON data validated in CI |
+| Embedded systems | ESP32-S2 AI HID Typer and PacketPunch development |
+| Android | Developing through the ESP32-S2 AI HID Typer Android client |
+| Security automation | Automated TryHackMe room, badge and difficulty synchronisation |
+
+## Practical Labs and Reports
+
+Evidence drawn from documents that exist in this repository.
+
+**Lab write-ups**
+
+<details>
+<summary>16 documents</summary>
+
+- [Authentication Bypass](writeups/tryhackme/authenticationbypass.md)
+- [Careers in Cyber](writeups/tryhackme/careersincyber.md)
+- [Content Discovery](writeups/tryhackme/contentdiscovery.md)
+- [DNS in Detail](writeups/tryhackme/dnsindetail.md)
+- [IDOR](writeups/tryhackme/idor.md)
+- [Intro to LAN](writeups/tryhackme/introtolan.md)
+- [Linux Fundamentals Part 1](writeups/tryhackme/linuxfundamentalspart1.md)
+- [Metasploit: Exploitation](writeups/tryhackme/metasploitexploitation.md)
+- [Metasploit: Introduction](writeups/tryhackme/metasploitintro.md)
+- [Metasploit: Meterpreter](writeups/tryhackme/meterpreter.md)
+- [Offensive Security Intro](writeups/tryhackme/offensivesecurityintro.md)
+- [Pentesting Fundamentals](writeups/tryhackme/pentestingfundamentals.md)
+- [Principles of Security](writeups/tryhackme/principlesofsecurity.md)
+- [Subdomain Enumeration](writeups/tryhackme/subdomainenumeration.md)
+- [Walking An Application](writeups/tryhackme/walkinganapplication.md)
+- [What is Networking?](writeups/tryhackme/whatisnetworking.md)
+
+</details>
+
+## Hack The Box
+
+Hack The Box progress has not been added yet. This section will track Machines, Sherlocks, Challenges and Academy modules as they are completed.
 
 <!-- THM:START -->
 ## TryHackMe
@@ -114,10 +190,19 @@ _Portfolio progress milestones — a personal tracker, not official TryHackMe ba
 
 This section is generated locally from my authenticated TryHackMe profile. Browser cookies remain on my own computer and are excluded from Git.
 <!-- THM:END -->
+<!-- PORTFOLIO:END -->
 
-## Using the Updater
+## About This Portfolio
 
-Clone the repository onto the Mac, then run:
+The sections above are generated locally by a small Python tool in this repository
+([portfolio.py](portfolio.py)) from validated JSON data, then written back into this
+README between the generated markers.
+
+TryHackMe activity is synced from my own authenticated profile. The updater uses a
+separate browser profile stored only in `.thm-browser/`, which holds login data, is
+excluded by `.gitignore`, and is never committed or shared.
+
+To run the updater locally:
 
 ```bash
 git clone https://github.com/Pre-Mortem/cybersecurity-portfolio.git
@@ -127,29 +212,9 @@ chmod +x setup sync-tryhackme
 ./sync-tryhackme
 ```
 
-The first sync opens a separate Chrome profile used only by this updater. Log into TryHackMe in that window and press Enter in Terminal. Later runs reuse that saved login without affecting your everyday Chrome profile, saved passwords or extensions.
+**Repository rules**
 
-Each sync:
-
-- checks the authenticated TryHackMe profile for completed rooms and badges
-- compares them with the repository data
-- creates a safe write-up template for each newly detected room
-- regenerates this README
-- commits and pushes genuine changes
-
-The updater's browser profile is stored locally in `.thm-browser/`. It contains login data, is excluded by `.gitignore`, and must never be committed or shared.
-
-## Lab Notes
-
-Safe room notes are stored under [`writeups/tryhackme`](writeups/tryhackme). These notes explain what I learned without publishing flags, credentials or direct room answers.
-
-## Security Projects
-
-This section will link to practical cybersecurity software, hardware and research projects as they are added.
-
-## Repository Rules
-
-- No TryHackMe flags or copied answers
+- No TryHackMe flags, Hack The Box flags or copied answers
 - No passwords, cookies, tokens or API keys
 - No sensitive personal or client information
-- Claims must be supported by completed work or evidence
+- Every claim is supported by completed work or evidence in this repository
