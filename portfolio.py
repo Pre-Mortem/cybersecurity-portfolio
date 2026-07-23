@@ -9,7 +9,7 @@ import json
 import re
 import subprocess
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from urllib.parse import quote, urljoin, urlparse
 
 ROOT = Path(__file__).resolve().parent
 CONFIG = ROOT / "config.example.json"
@@ -83,17 +83,33 @@ This entry contains learning notes only. Flags, credentials and direct room answ
 BADGE_COLUMNS = 3
 
 
+VALID_BADGE_CODE = re.compile(r"[A-Za-z0-9._-]+")
+
+
+def badge_page_url(code) -> str | None:
+    """Return the individual public badge page URL for a badge code, or None.
+
+    The code must be a non-empty slug of URL-safe characters; anything else
+    (empty, or containing spaces, slashes, quotes, angle brackets, etc.) is
+    rejected so it cannot inject HTML or alter the URL path structure. The
+    accepted code is URL-encoded (a no-op for valid slugs) before use."""
+    code = str(code or "").strip()
+    if not code or not VALID_BADGE_CODE.fullmatch(code):
+        return None
+    return f"https://tryhackme.com/PreMortem/badges/{quote(code, safe='')}"
+
+
 def build_badge_showcase(badges: list) -> str:
     """Return a GitHub-README-compatible HTML showcase of earned badges.
 
     Each badge is rendered image-over-name in its own centred table cell, with
-    a fixed number of badges per row. Both the image and the name link to the
-    TryHackMe profile (the badge data holds no per-badge URLs). Names are
+    a fixed number of badges per row. Both the image and the name link to that
+    badge's own public TryHackMe page, built from its stored ``code``. Names are
     HTML-escaped. A badge without a valid http(s) image falls back to its name
-    as a text link (no broken image). The showcase is generated entirely from
-    the supplied data, so future badges appear automatically.
+    as text (no broken image); a badge without a valid code is shown unlinked
+    rather than wrapped in an invented link. The showcase is generated entirely
+    from the supplied data, so future badges appear automatically.
     """
-    link = html.escape(PROFILE_URL, quote=True)
     cells = []
     for badge in badges:
         name = html.escape(str(badge.get("name") or "Badge"))
@@ -103,11 +119,13 @@ def build_badge_showcase(badges: list) -> str:
             inner = f'<img src="{src}" alt="{name}" width="100"><br>\n<strong>{name}</strong>'
         else:
             inner = f"<strong>{name}</strong>"
-        cells.append(
-            f'<td align="center" width="130">\n'
-            f'<a href="{link}">\n{inner}\n</a>\n'
-            f'</td>'
-        )
+
+        url = badge_page_url(badge.get("code"))
+        if url:
+            link = html.escape(url, quote=True)
+            inner = f'<a href="{link}">\n{inner}\n</a>'
+
+        cells.append(f'<td align="center" width="130">\n{inner}\n</td>')
 
     if not cells:
         return "No badges recorded yet"

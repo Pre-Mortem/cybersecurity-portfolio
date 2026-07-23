@@ -45,19 +45,19 @@ A growing collection of achievements earned through completed TryHackMe rooms an
 <table>
 <tr>
 <td align="center" width="130">
-<a href="https://tryhackme.com/p/PreMortem">
+<a href="https://tryhackme.com/PreMortem/badges/terminaled">
 <img src="https://assets.tryhackme.com/img/badges/linux.png" alt="cat linux.txt" width="100"><br>
 <strong>cat linux.txt</strong>
 </a>
 </td>
 <td align="center" width="130">
-<a href="https://tryhackme.com/p/PreMortem">
+<a href="https://tryhackme.com/PreMortem/badges/first-4-rooms">
 <img src="https://assets.tryhackme.com/img/badges/firstfour.png" alt="First Four" width="100"><br>
 <strong>First Four</strong>
 </a>
 </td>
 <td align="center" width="130">
-<a href="https://tryhackme.com/p/PreMortem">
+<a href="https://tryhackme.com/PreMortem/badges/metasploitable">
 <img src="https://assets.tryhackme.com/img/badges/metasploit.png" alt="Metasploitable" width="100"><br>
 <strong>Metasploitable</strong>
 </a>
@@ -65,19 +65,19 @@ A growing collection of achievements earned through completed TryHackMe rooms an
 </tr>
 <tr>
 <td align="center" width="130">
-<a href="https://tryhackme.com/p/PreMortem">
+<a href="https://tryhackme.com/PreMortem/badges/network-fundamentals">
 <img src="https://assets.tryhackme.com/img/badges/networkfundamentals.png" alt="Networking Nerd" width="100"><br>
 <strong>Networking Nerd</strong>
 </a>
 </td>
 <td align="center" width="130">
-<a href="https://tryhackme.com/p/PreMortem">
+<a href="https://tryhackme.com/PreMortem/badges/intro-to-pentesting">
 <img src="https://assets.tryhackme.com/img/badges/introtooffensivesecurity.png" alt="Pentesting Principles" width="100"><br>
 <strong>Pentesting Principles</strong>
 </a>
 </td>
 <td align="center" width="130">
-<a href="https://tryhackme.com/p/PreMortem">
+<a href="https://tryhackme.com/PreMortem/badges/web-fund">
 <img src="https://assets.tryhackme.com/img/badges/webbed.png" alt="Webbed" width="100"><br>
 <strong>Webbed</strong>
 </a>
