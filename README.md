@@ -5,10 +5,21 @@ A practical record of my cybersecurity training, TryHackMe progress, lab work an
 <!-- THM:START -->
 ## TryHackMe
 
-**Profile:** [PreMortem](https://tryhackme.com/p/PreMortem)  
-**Completed rooms recorded:** 16  
-**Badges recorded:** 6  
-**Last local sync:** 2026-07-23T11:44:41+00:00
+**Profile:** [PreMortem](https://tryhackme.com/p/PreMortem)<br>
+**Last local sync:** 23 July 2026, 11:44 UTC
+
+<div align="center">
+
+<table>
+<tr>
+<td align="center">&nbsp;<strong>Rooms Completed</strong>&nbsp;<br>16</td>
+<td align="center">&nbsp;<strong>Badges Earned</strong>&nbsp;<br>6</td>
+<td align="center">&nbsp;<strong>Easy</strong>&nbsp;<br>15</td>
+<td align="center">&nbsp;<strong>Info</strong>&nbsp;<br>1</td>
+</tr>
+</table>
+
+</div>
 
 ### Recently Completed Rooms
 
@@ -25,37 +36,76 @@ A practical record of my cybersecurity training, TryHackMe progress, lab work an
 | [Content Discovery](https://tryhackme.com/room/contentdiscovery) | Easy | 2026-07-23 |
 | [Subdomain Enumeration](https://tryhackme.com/room/subdomainenumeration) | Easy | 2026-07-23 |
 
-### Badges
+### Achievement Cabinet
+
+A growing collection of achievements earned through completed TryHackMe rooms and learning paths.
 
 <div align="center">
 
 <table>
 <tr>
 <td align="center" width="130">
+<a href="https://tryhackme.com/p/PreMortem">
 <img src="https://assets.tryhackme.com/img/badges/linux.png" alt="cat linux.txt" width="100"><br>
 <strong>cat linux.txt</strong>
+</a>
 </td>
 <td align="center" width="130">
+<a href="https://tryhackme.com/p/PreMortem">
 <img src="https://assets.tryhackme.com/img/badges/firstfour.png" alt="First Four" width="100"><br>
 <strong>First Four</strong>
+</a>
 </td>
 <td align="center" width="130">
+<a href="https://tryhackme.com/p/PreMortem">
 <img src="https://assets.tryhackme.com/img/badges/metasploit.png" alt="Metasploitable" width="100"><br>
 <strong>Metasploitable</strong>
+</a>
 </td>
 </tr>
 <tr>
 <td align="center" width="130">
+<a href="https://tryhackme.com/p/PreMortem">
 <img src="https://assets.tryhackme.com/img/badges/networkfundamentals.png" alt="Networking Nerd" width="100"><br>
 <strong>Networking Nerd</strong>
+</a>
 </td>
 <td align="center" width="130">
+<a href="https://tryhackme.com/p/PreMortem">
 <img src="https://assets.tryhackme.com/img/badges/introtooffensivesecurity.png" alt="Pentesting Principles" width="100"><br>
 <strong>Pentesting Principles</strong>
+</a>
 </td>
 <td align="center" width="130">
+<a href="https://tryhackme.com/p/PreMortem">
 <img src="https://assets.tryhackme.com/img/badges/webbed.png" alt="Webbed" width="100"><br>
 <strong>Webbed</strong>
+</a>
+</td>
+</tr>
+</table>
+
+</div>
+
+### Room Milestones
+
+_Portfolio progress milestones — a personal tracker, not official TryHackMe badges._
+
+<div align="center">
+
+<table>
+<tr>
+<td align="center" width="120">
+✅<br><strong>10 Rooms</strong><br>Complete
+</td>
+<td align="center" width="120">
+🚧<br><strong>25 Rooms</strong><br>16 / 25
+</td>
+<td align="center" width="120">
+⬜<br><strong>50 Rooms</strong><br>Upcoming
+</td>
+<td align="center" width="120">
+⬜<br><strong>100 Rooms</strong><br>Upcoming
 </td>
 </tr>
 </table>

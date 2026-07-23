@@ -20,6 +20,7 @@ README = ROOT / "README.md"
 BROWSER_STATE = ROOT / ".thm-browser"
 START = "<!-- THM:START -->"
 END = "<!-- THM:END -->"
+PROFILE_URL = "https://tryhackme.com/p/PreMortem"
 
 
 def read_json(path: Path, default):
@@ -86,11 +87,13 @@ def build_badge_showcase(badges: list) -> str:
     """Return a GitHub-README-compatible HTML showcase of earned badges.
 
     Each badge is rendered image-over-name in its own centred table cell, with
-    a fixed number of badges per row. Names are HTML-escaped. A badge without a
-    valid http(s) image falls back to its name as text (no broken image). The
-    showcase is generated entirely from the supplied data, so future badges
-    appear automatically.
+    a fixed number of badges per row. Both the image and the name link to the
+    TryHackMe profile (the badge data holds no per-badge URLs). Names are
+    HTML-escaped. A badge without a valid http(s) image falls back to its name
+    as a text link (no broken image). The showcase is generated entirely from
+    the supplied data, so future badges appear automatically.
     """
+    link = html.escape(PROFILE_URL, quote=True)
     cells = []
     for badge in badges:
         name = html.escape(str(badge.get("name") or "Badge"))
@@ -100,7 +103,11 @@ def build_badge_showcase(badges: list) -> str:
             inner = f'<img src="{src}" alt="{name}" width="100"><br>\n<strong>{name}</strong>'
         else:
             inner = f"<strong>{name}</strong>"
-        cells.append(f'<td align="center" width="130">\n{inner}\n</td>')
+        cells.append(
+            f'<td align="center" width="130">\n'
+            f'<a href="{link}">\n{inner}\n</a>\n'
+            f'</td>'
+        )
 
     if not cells:
         return "No badges recorded yet"
@@ -110,6 +117,82 @@ def build_badge_showcase(badges: list) -> str:
         row = "\n".join(cells[start:start + BADGE_COLUMNS])
         rows.append(f"<tr>\n{row}\n</tr>")
     table = "<table>\n" + "\n".join(rows) + "\n</table>"
+    return f'<div align="center">\n\n{table}\n\n</div>'
+
+
+DIFFICULTY_ORDER = ("Easy", "Info", "Medium", "Hard", "Insane")
+
+
+def format_sync_timestamp(value) -> str:
+    """Format a stored ISO timestamp for display, e.g. '23 July 2026, 11:44 UTC'.
+
+    The stored value is never modified. Timezone-aware values are normalised to
+    UTC; a trailing 'Z' is tolerated. On any parse failure the original value is
+    returned unchanged.
+    """
+    if not value:
+        return "Not yet synced"
+    text = str(value)
+    try:
+        parsed = dt.datetime.fromisoformat(text.replace("Z", "+00:00"))
+        if parsed.tzinfo is not None:
+            parsed = parsed.astimezone(dt.timezone.utc)
+        return f"{parsed.day} {parsed:%B %Y}, {parsed:%H:%M} UTC"
+    except (ValueError, TypeError):
+        return text
+
+
+def build_progress_summary(rooms: dict, badges: dict) -> str:
+    """Compact centred HTML summary of room/badge counts and difficulty spread.
+
+    Rooms and Badges always appear; difficulty categories appear only when at
+    least one recorded room has that difficulty. All figures are derived from
+    the supplied data."""
+    room_list = rooms.get("rooms", [])
+    counts = {level: 0 for level in DIFFICULTY_ORDER}
+    for room in room_list:
+        level = (room.get("difficulty") or "").strip().title()
+        if level in counts:
+            counts[level] += 1
+
+    metrics = [
+        ("Rooms Completed", len(room_list)),
+        ("Badges Earned", len(badges.get("badges", []))),
+    ]
+    for level in DIFFICULTY_ORDER:
+        if counts[level] > 0:
+            metrics.append((level, counts[level]))
+
+    cells = "\n".join(
+        f'<td align="center">&nbsp;<strong>{html.escape(label)}</strong>&nbsp;<br>{value}</td>'
+        for label, value in metrics
+    )
+    return f'<div align="center">\n\n<table>\n<tr>\n{cells}\n</tr>\n</table>\n\n</div>'
+
+
+ROOM_MILESTONES = (10, 25, 50, 100)
+
+
+def build_milestones(room_count: int) -> str:
+    """Portfolio progress milestones (a personal tracker, not TryHackMe badges).
+
+    Completed milestones are marked done; the first incomplete milestone shows
+    live progress (e.g. '16 / 25'); later milestones are upcoming. Everything is
+    derived from the current room count."""
+    next_shown = False
+    cells = []
+    for target in ROOM_MILESTONES:
+        if room_count >= target:
+            status = f"✅<br><strong>{target} Rooms</strong><br>Complete"
+        elif not next_shown:
+            status = f"🚧<br><strong>{target} Rooms</strong><br>{room_count} / {target}"
+            next_shown = True
+        else:
+            status = f"⬜<br><strong>{target} Rooms</strong><br>Upcoming"
+        cells.append(f'<td align="center" width="120">\n{status}\n</td>')
+
+    row = "\n".join(cells)
+    table = f"<table>\n<tr>\n{row}\n</tr>\n</table>"
     return f'<div align="center">\n\n{table}\n\n</div>'
 
 
@@ -125,14 +208,17 @@ def render(profile: dict, rooms: dict, badges: dict) -> str:
         rows.append("| No rooms recorded yet | — | — |")
 
     badge_showcase = build_badge_showcase(badges.get("badges", []))
+    progress_summary = build_progress_summary(rooms, badges)
+    milestones = build_milestones(len(rooms["rooms"]))
+    last_sync = format_sync_timestamp(profile.get("last_sync"))
 
     return f"""{START}
 ## TryHackMe
 
-**Profile:** [PreMortem](https://tryhackme.com/p/PreMortem)  
-**Completed rooms recorded:** {len(rooms['rooms'])}  
-**Badges recorded:** {len(badges.get('badges', []))}  
-**Last local sync:** {profile.get('last_sync') or 'Not yet synced'}
+**Profile:** [PreMortem]({PROFILE_URL})<br>
+**Last local sync:** {last_sync}
+
+{progress_summary}
 
 ### Recently Completed Rooms
 
@@ -140,9 +226,17 @@ def render(profile: dict, rooms: dict, badges: dict) -> str:
 |---|---|---|
 {chr(10).join(rows)}
 
-### Badges
+### Achievement Cabinet
+
+A growing collection of achievements earned through completed TryHackMe rooms and learning paths.
 
 {badge_showcase}
+
+### Room Milestones
+
+_Portfolio progress milestones — a personal tracker, not official TryHackMe badges._
+
+{milestones}
 
 This section is generated locally from my authenticated TryHackMe profile. Browser cookies remain on my own computer and are excluded from Git.
 {END}"""
