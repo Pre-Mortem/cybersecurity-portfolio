@@ -1,0 +1,47 @@
+name: Sync TryHackMe profile
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 20 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Create runtime configuration
+        env:
+          THM_USERNAME: ${{ vars.THM_USERNAME }}
+          THM_PUBLIC_USER_ID: ${{ secrets.THM_PUBLIC_USER_ID }}
+          THM_PUBLIC_PROFILE_URL: ${{ vars.THM_PUBLIC_PROFILE_URL }}
+        run: |
+          python - <<'PY'
+          import json, os
+          config = {
+              "tryhackme": {
+                  "username": os.environ.get("THM_USERNAME", ""),
+                  "public_user_id": os.environ.get("THM_PUBLIC_USER_ID", ""),
+                  "public_profile_url": os.environ.get("THM_PUBLIC_PROFILE_URL", "")
+              },
+              "github": {"repository": "${{ github.repository }}"}
+          }
+          with open("config.json", "w", encoding="utf-8") as handle:
+              json.dump(config, handle, indent=2)
+              handle.write("\n")
+          PY
+      - name: Sync profile
+        run: python portfolio.py sync
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md data/profile.json assets/tryhackme/public-profile.png
+          git diff --cached --quiet || git commit -m "Sync TryHackMe public profile"
+          git push
