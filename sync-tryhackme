@@ -7,6 +7,6 @@ if [ ! -x .venv/bin/python ]; then
   exit 1
 fi
 . .venv/bin/activate
-python portfolio.py browser-sync
+python room_sync.py
 python room_difficulty_sync.py
 python badge_sync.py --publish
