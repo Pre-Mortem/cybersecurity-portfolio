@@ -8,7 +8,7 @@ A practical record of my cybersecurity training, TryHackMe progress, lab work an
 **Profile:** [PreMortem](https://tryhackme.com/p/PreMortem)  
 **Completed rooms recorded:** 16  
 **Badges recorded:** 6  
-**Last local sync:** 2026-07-23T11:26:47+00:00
+**Last local sync:** 2026-07-23T11:44:41+00:00
 
 ### Recently Completed Rooms
 
