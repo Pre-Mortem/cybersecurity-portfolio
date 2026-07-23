@@ -1,3 +1,164 @@
 {
-  "rooms": []
+  "rooms": [
+    {
+      "name": "Linux Fundamentals Part 1",
+      "slug": "linuxfundamentalspart1",
+      "url": "https://tryhackme.com/room/linuxfundamentalspart1",
+      "difficulty": "",
+      "category": "",
+      "completed": "2026-07-23",
+      "writeup": "writeups/tryhackme/linuxfundamentalspart1.md",
+      "source": "authenticated-browser-sync"
+    },
+    {
+      "name": "DNS in Detail",
+      "slug": "dnsindetail",
+      "url": "https://tryhackme.com/room/dnsindetail",
+      "difficulty": "",
+      "category": "",
+      "completed": "2026-07-23",
+      "writeup": "writeups/tryhackme/dnsindetail.md",
+      "source": "authenticated-browser-sync"
+    },
+    {
+      "name": "What is Networking?",
+      "slug": "whatisnetworking",
+      "url": "https://tryhackme.com/room/whatisnetworking",
+      "difficulty": "",
+      "category": "",
+      "completed": "2026-07-23",
+      "writeup": "writeups/tryhackme/whatisnetworking.md",
+      "source": "authenticated-browser-sync"
+    },
+    {
+      "name": "Intro to LAN",
+      "slug": "introtolan",
+      "url": "https://tryhackme.com/room/introtolan",
+      "difficulty": "",
+      "category": "",
+      "completed": "2026-07-23",
+      "writeup": "writeups/tryhackme/introtolan.md",
+      "source": "authenticated-browser-sync"
+    },
+    {
+      "name": "Walking An Application",
+      "slug": "walkinganapplication",
+      "url": "https://tryhackme.com/room/walkinganapplication",
+      "difficulty": "",
+      "category": "",
+      "completed": "2026-07-23",
+      "writeup": "writeups/tryhackme/walkinganapplication.md",
+      "source": "authenticated-browser-sync"
+    },
+    {
+      "name": "Pentesting Fundamentals",
+      "slug": "pentestingfundamentals",
+      "url": "https://tryhackme.com/room/pentestingfundamentals",
+      "difficulty": "",
+      "category": "",
+      "completed": "2026-07-23",
+      "writeup": "writeups/tryhackme/pentestingfundamentals.md",
+      "source": "authenticated-browser-sync"
+    },
+    {
+      "name": "Principles of Security",
+      "slug": "principlesofsecurity",
+      "url": "https://tryhackme.com/room/principlesofsecurity",
+      "difficulty": "",
+      "category": "",
+      "completed": "2026-07-23",
+      "writeup": "writeups/tryhackme/principlesofsecurity.md",
+      "source": "authenticated-browser-sync"
+    },
+    {
+      "name": "Metasploit: Exploitation",
+      "slug": "metasploitexploitation",
+      "url": "https://tryhackme.com/room/metasploitexploitation",
+      "difficulty": "",
+      "category": "",
+      "completed": "2026-07-23",
+      "writeup": "writeups/tryhackme/metasploitexploitation.md",
+      "source": "authenticated-browser-sync"
+    },
+    {
+      "name": "Content Discovery",
+      "slug": "contentdiscovery",
+      "url": "https://tryhackme.com/room/contentdiscovery",
+      "difficulty": "",
+      "category": "",
+      "completed": "2026-07-23",
+      "writeup": "writeups/tryhackme/contentdiscovery.md",
+      "source": "authenticated-browser-sync"
+    },
+    {
+      "name": "Subdomain Enumeration",
+      "slug": "subdomainenumeration",
+      "url": "https://tryhackme.com/room/subdomainenumeration",
+      "difficulty": "",
+      "category": "",
+      "completed": "2026-07-23",
+      "writeup": "writeups/tryhackme/subdomainenumeration.md",
+      "source": "authenticated-browser-sync"
+    },
+    {
+      "name": "Authentication Bypass",
+      "slug": "authenticationbypass",
+      "url": "https://tryhackme.com/room/authenticationbypass",
+      "difficulty": "",
+      "category": "",
+      "completed": "2026-07-23",
+      "writeup": "writeups/tryhackme/authenticationbypass.md",
+      "source": "authenticated-browser-sync"
+    },
+    {
+      "name": "Metasploit: Introduction",
+      "slug": "metasploitintro",
+      "url": "https://tryhackme.com/room/metasploitintro",
+      "difficulty": "",
+      "category": "",
+      "completed": "2026-07-23",
+      "writeup": "writeups/tryhackme/metasploitintro.md",
+      "source": "authenticated-browser-sync"
+    },
+    {
+      "name": "IDOR",
+      "slug": "idor",
+      "url": "https://tryhackme.com/room/idor",
+      "difficulty": "",
+      "category": "",
+      "completed": "2026-07-23",
+      "writeup": "writeups/tryhackme/idor.md",
+      "source": "authenticated-browser-sync"
+    },
+    {
+      "name": "Metasploit: Meterpreter",
+      "slug": "meterpreter",
+      "url": "https://tryhackme.com/room/meterpreter",
+      "difficulty": "",
+      "category": "",
+      "completed": "2026-07-23",
+      "writeup": "writeups/tryhackme/meterpreter.md",
+      "source": "authenticated-browser-sync"
+    },
+    {
+      "name": "Offensive Security Intro",
+      "slug": "offensivesecurityintro",
+      "url": "https://tryhackme.com/room/offensivesecurityintro",
+      "difficulty": "",
+      "category": "",
+      "completed": "2026-07-23",
+      "writeup": "writeups/tryhackme/offensivesecurityintro.md",
+      "source": "authenticated-browser-sync"
+    },
+    {
+      "name": "Careers in Cyber",
+      "slug": "careersincyber",
+      "url": "https://tryhackme.com/room/careersincyber",
+      "difficulty": "",
+      "category": "",
+      "completed": "2026-07-23",
+      "writeup": "writeups/tryhackme/careersincyber.md",
+      "source": "authenticated-browser-sync"
+    }
+  ]
 }
