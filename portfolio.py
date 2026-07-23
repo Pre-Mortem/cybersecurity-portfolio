@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
-import os
 import re
 import subprocess
 from pathlib import Path
@@ -17,10 +16,9 @@ ROOMS = ROOT / "data/rooms.json"
 PROFILE = ROOT / "data/profile.json"
 BADGES = ROOT / "data/badges.json"
 README = ROOT / "README.md"
+BROWSER_STATE = ROOT / ".thm-browser"
 START = "<!-- THM:START -->"
 END = "<!-- THM:END -->"
-CHROME_USER_DATA = Path.home() / "Library/Application Support/Google/Chrome"
-CHROME_PROFILE = os.environ.get("CHROME_PROFILE_DIR", "Default")
 
 
 def read_json(path: Path, default):
@@ -40,16 +38,6 @@ def slugify(value: str) -> str:
 
 def run_git(*args: str, check: bool = True):
     return subprocess.run(["git", *args], cwd=ROOT, text=True, check=check, capture_output=True)
-
-
-def chrome_is_running() -> bool:
-    result = subprocess.run(
-        ["pgrep", "-x", "Google Chrome"],
-        text=True,
-        capture_output=True,
-        check=False,
-    )
-    return result.returncode == 0
 
 
 def writeup_for(room: dict) -> None:
@@ -126,7 +114,7 @@ def render(profile: dict, rooms: dict, badges: dict) -> str:
 
 {chr(10).join(badge_lines)}
 
-This section is generated locally from my authenticated TryHackMe profile. Browser cookies remain in my normal Chrome profile and are never copied into this repository.
+This section is generated locally from my authenticated TryHackMe profile. Browser cookies remain on my own computer and are excluded from Git.
 {END}"""
 
 
@@ -172,40 +160,28 @@ def browser_sync(args) -> int:
     except ImportError:
         raise SystemExit("Playwright is not installed. Run: ./setup")
 
-    if not CHROME_USER_DATA.exists():
-        raise SystemExit(f"Chrome profile folder was not found: {CHROME_USER_DATA}")
-    if not (CHROME_USER_DATA / CHROME_PROFILE).exists():
-        raise SystemExit(
-            f"Chrome profile '{CHROME_PROFILE}' was not found. "
-            "Set CHROME_PROFILE_DIR to Default, Profile 1, Profile 2, etc."
-        )
-    if chrome_is_running():
-        raise SystemExit(
-            "Google Chrome is currently running. Fully quit Chrome with Cmd+Q, then run ./sync-tryhackme again. "
-            "This is required because Chrome locks the daily profile while it is open."
-        )
-
+    BROWSER_STATE.mkdir(parents=True, exist_ok=True)
     profile_url = "https://tryhackme.com/p/PreMortem"
     discovered_rooms: list[dict] = []
     discovered_badges: list[dict] = []
 
     with sync_playwright() as playwright:
         context = playwright.chromium.launch_persistent_context(
-            str(CHROME_USER_DATA),
+            str(BROWSER_STATE),
             headless=False,
             channel="chrome",
-            args=[f"--profile-directory={CHROME_PROFILE}"],
             viewport={"width": 1440, "height": 1000},
         )
         page = context.pages[0] if context.pages else context.new_page()
+        page.goto(profile_url, wait_until="domcontentloaded", timeout=90000)
+        print("A separate Chrome window has opened for TryHackMe syncing.")
+        print("Log into TryHackMe there if required, then return here and press Enter.")
+        input()
         page.goto(profile_url, wait_until="networkidle", timeout=90000)
 
-        if "/login" in page.url.lower() or (page.locator("text=Login").count() > 0 and "PreMortem" not in page.content()):
+        if "/login" in page.url.lower() or page.locator("text=Login").count() > 0 and "PreMortem" not in page.content():
             context.close()
-            raise SystemExit(
-                f"TryHackMe appears logged out in Chrome profile '{CHROME_PROFILE}'. "
-                "Open normal Chrome with that profile, log into TryHackMe, quit Chrome, then rerun the sync."
-            )
+            raise SystemExit("TryHackMe still appears logged out. Run ./sync-tryhackme again and complete login.")
 
         for url in (
             profile_url,
@@ -254,13 +230,11 @@ def browser_sync(args) -> int:
         "username": "PreMortem",
         "profile_url": profile_url,
         "last_sync": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat(),
-        "sync_method": "daily-chrome-profile",
-        "chrome_profile": CHROME_PROFILE,
+        "sync_method": "isolated-authenticated-browser",
     })
     write_json(PROFILE, profile)
     update_readme(render(profile, rooms_data, badges_data))
 
-    print(f"Used Chrome profile: {CHROME_PROFILE}")
     print(f"Found {len(discovered_rooms)} completed-room candidates and {len(discovered_badges)} badge candidates.")
     print(f"Added {len(added)} new room(s).")
     for room in added:
