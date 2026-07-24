@@ -1,6 +1,7 @@
 # IDOR
 
 - Platform: TryHackMe
+- Status: Template Stub
 - Completed: 2026-07-23
 - Room URL: https://tryhackme.com/room/idor
 - Difficulty: Not recorded
