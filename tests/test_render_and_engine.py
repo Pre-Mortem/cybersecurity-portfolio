@@ -145,7 +145,7 @@ class TestRunSyncOutcomes(unittest.TestCase):
 
 class TestPublishSafety(unittest.TestCase):
     def test_allowlist_constant(self):
-        self.assertEqual(portfolio.PUBLISH_ALLOWLIST, ("README.md", "data", "writeups"))
+        self.assertEqual(portfolio.PUBLISH_ALLOWLIST, ("README.md", "TRAINING.md", "docs", "data", "writeups"))
 
     def test_private_artefact_rejected(self):
         with mock.patch.object(portfolio, "_git_paths_staged",

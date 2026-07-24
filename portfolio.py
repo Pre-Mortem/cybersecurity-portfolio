@@ -19,6 +19,7 @@ BADGES = ROOT / "data/badges.json"
 HACKTHEBOX = ROOT / "data/hackthebox.json"
 EVIDENCE = ROOT / "data/evidence.json"
 README = ROOT / "README.md"
+TRAINING_MD = ROOT / "TRAINING.md"
 BROWSER_STATE = ROOT / ".thm-browser"
 START = "<!-- THM:START -->"
 END = "<!-- THM:END -->"
@@ -27,6 +28,8 @@ END = "<!-- THM:END -->"
 # unaffected.
 GEN_START = "<!-- PORTFOLIO:START -->"
 GEN_END = "<!-- PORTFOLIO:END -->"
+TRAINING_START = "<!-- TRAINING:START -->"
+TRAINING_END = "<!-- TRAINING:END -->"
 PROFILE_URL = "https://tryhackme.com/p/PreMortem"
 REPO_URL = "https://github.com/Pre-Mortem/cybersecurity-portfolio"
 
@@ -58,6 +61,7 @@ def writeup_for(room: dict) -> None:
     path.write_text(f"""# {room['name']}
 
 - Platform: TryHackMe
+- Status: Template Stub
 - Completed: {room['completed']}
 - Room URL: {room.get('url') or 'Not recorded'}
 - Difficulty: {room.get('difficulty') or 'Not recorded'}
@@ -418,15 +422,22 @@ EVIDENCE_GROUPS = [
 ]
 
 
-def _read_title(path: Path) -> str:
+def _read_title_and_status(path: Path) -> tuple[str, str]:
+    title = path.stem
+    status = "Template Stub"
     try:
-        for line in path.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if line.startswith("# "):
-                return line[2:].strip()
+        content = path.read_text(encoding="utf-8")
+        for line in content.splitlines():
+            line_str = line.strip()
+            if line_str.startswith("# "):
+                title = line_str[2:].strip()
+            elif line_str.startswith("- Status:"):
+                status = line_str.split(":", 1)[1].strip()
+        if "Describe the room without exposing answers or flags" in content:
+            status = "Template Stub"
     except OSError:
         pass
-    return ""
+    return title, status
 
 
 def _evidence_link(title: str, target: str) -> str:
@@ -447,17 +458,21 @@ def _evidence_link(title: str, target: str) -> str:
 
 
 def build_evidence_section() -> str:
-    groups = {label: [] for label, _ in EVIDENCE_GROUPS}
+    completed_items = []
+    stub_count = 0
 
-    # Auto-discover lab write-ups that actually exist in the repository.
     writeups_dir = ROOT / "writeups"
     if writeups_dir.exists():
         for path in sorted(writeups_dir.rglob("*.md")):
-            title = _read_title(path) or path.stem
+            if "templates" in path.parts:
+                continue
+            title, status = _read_title_and_status(path)
             rel = path.relative_to(ROOT).as_posix()
-            groups["Lab write-ups"].append(_evidence_link(title, rel))
+            if status.lower() == "completed":
+                completed_items.append(_evidence_link(title, rel))
+            else:
+                stub_count += 1
 
-    # Merge an optional manifest of further evidence (validated file paths / links).
     manifest = read_optional_json(EVIDENCE, {})
     if isinstance(manifest, dict):
         key_to_label = {key: label for label, key in EVIDENCE_GROUPS}
@@ -471,28 +486,22 @@ def build_evidence_section() -> str:
                 title = str(entry.get("title") or "").strip()
                 target = str(entry.get("path") or entry.get("url") or "").strip()
                 if title and target:
-                    groups[label].append(_evidence_link(title, target))
-
-    blocks = []
-    for label, _ in EVIDENCE_GROUPS:
-        items = groups[label]
-        if not items:
-            continue
-        listing = "\n".join(items)
-        if label == "Lab write-ups" and len(items) > 6:
-            blocks.append(
-                f"**{label}**\n\n"
-                f"<details>\n<summary>{len(items)} documents</summary>\n\n"
-                f"{listing}\n\n</details>"
-            )
-        else:
-            blocks.append(f"**{label}**\n\n{listing}")
+                    completed_items.append(_evidence_link(title, target))
 
     header = "## Practical Labs and Reports\n\n"
-    if not blocks:
-        return header + "Practical reports and lab evidence will be added as work is completed."
-    intro = "Evidence drawn from documents that exist in this repository.\n\n"
-    return header + intro + "\n\n".join(blocks)
+    parts = []
+    if completed_items:
+        parts.append("**Completed Security Research & Reports**\n\n" + "\n".join(completed_items))
+    else:
+        parts.append("_Completed security research and practical reports will be featured here as completed._")
+
+    if stub_count > 0:
+        parts.append(
+            f"_Note: {stub_count} room write-up stubs are maintained in [`writeups/tryhackme/`](writeups/tryhackme) "
+            "as note-taking templates for completed TryHackMe rooms._"
+        )
+
+    return header + "\n\n".join(parts)
 
 
 # --- Hack The Box (future-ready, no invented data) -------------------------
@@ -564,14 +573,15 @@ def _htb_name_list(items: list) -> str:
     return "\n".join(f"- {md_cell(item.get('name'))}" for item in items)
 
 
-def build_hackthebox_section() -> str:
+def build_hackthebox_section(data: dict | None = None) -> str:
     """Render the Hack The Box section from data/hackthebox.json (new schema).
 
     Only categories with recorded data are shown; unsupported/empty categories
     never produce empty tables. All content is escaped and only http(s) links
     are emitted. No flags, answers or protected solution content are rendered.
     """
-    data = read_optional_json(HACKTHEBOX, {})
+    if data is None:
+        data = read_optional_json(HACKTHEBOX, {})
     if not isinstance(data, dict):
         data = {}
 
@@ -655,31 +665,139 @@ def build_hackthebox_section() -> str:
     return "\n\n".join(parts)
 
 
-def render(profile: dict, rooms: dict, badges: dict) -> str:
-    rows = []
-    ordered = sorted(rooms["rooms"], key=lambda item: item.get("completed", ""), reverse=True)
-    for room in ordered[:10]:
-        name = room["name"].replace("|", "\\|")
-        if room.get("url"):
-            name = f"[{name}]({room['url']})"
-        rows.append(f"| {name} | {room.get('difficulty') or '—'} | {room['completed']} |")
-    if not rows:
-        rows.append("| No rooms recorded yet | — | — |")
-
-    badge_showcase = build_badge_showcase(badges.get("badges", []))
-    progress_summary = build_progress_summary(rooms, badges)
-    milestones = build_milestones(len(rooms["rooms"]))
+def build_tryhackme_summary(profile: dict, rooms: dict, badges: dict) -> str:
     last_sync = format_sync_timestamp(profile.get("last_sync"))
+    progress_summary = build_progress_summary(rooms, badges)
 
-    tryhackme = f"""{START}
-## TryHackMe
+    room_list = rooms.get("rooms", [])
+    ordered = sorted(room_list, key=lambda item: item.get("completed", ""), reverse=True)
+    recent_names = [room.get("name", "") for room in ordered[:5] if room.get("name")]
+    recent_str = ", ".join(recent_names) if recent_names else "None recorded yet"
+
+    return f"""{START}
+### TryHackMe Summary
 
 **Profile:** [PreMortem]({PROFILE_URL})<br>
 **Last local sync:** {last_sync}
 
 {progress_summary}
 
-### Recently Completed Rooms
+**Recent Activity:** {recent_str}.<br>
+_See [TRAINING.md](TRAINING.md#tryhackme) for complete TryHackMe room history, badge showcase, and room milestones._
+{END}"""
+
+
+def build_hackthebox_summary(data: dict | None = None) -> str:
+    if data is None:
+        data = read_optional_json(HACKTHEBOX, {})
+    if not isinstance(data, dict):
+        data = {}
+
+    identity = data.get("public_identity") if isinstance(data.get("public_identity"), dict) else {}
+    username = html.escape(str(identity.get("username") or "PreMortem").strip())
+    profile_url = safe_url(identity.get("profile_url")) or "https://htb.site/PreMortem"
+    totals = _htb_totals(data)
+
+    header = "### Hack The Box Summary\n\n"
+    identity_line = f"**Profile:** [{username}]({profile_url})<br>**Last local sync:** {format_sync_timestamp(data.get('synced_at'))}"
+
+    if not totals:
+        return header + identity_line + "\n\n" + (
+            "Hack The Box integration is active. No completed labs recorded yet. "
+            "See [TRAINING.md](TRAINING.md#hack-the-box) for complete platform metrics."
+        )
+
+    cells = "\n".join(
+        f'<td align="center">&nbsp;<strong>{html.escape(label)}</strong>&nbsp;<br>{count}</td>'
+        for label, count in totals
+    )
+    table = f'<div align="center">\n\n<table>\n<tr>\n{cells}\n</tr>\n</table>\n\n</div>'
+    return header + identity_line + "\n\n" + table + "\n\n" + (
+        "_See [TRAINING.md](TRAINING.md#hack-the-box) for complete Hack The Box machine, "
+        "Sherlock, challenge, and Academy history._"
+    )
+
+
+def build_cisco_summary() -> str:
+    return (
+        "### Cisco Networking Academy Summary\n\n"
+        "**Status:** Integration planned (Roadmap item)<br>\n"
+        "_Public identity protection enabled by default. Only non-identifying achievement details "
+        "(course title, completion status, date, badge, skills) will be published. "
+        "See [docs/ROADMAP.md](docs/ROADMAP.md) for details._"
+    )
+
+
+def build_portfolio_stats(rooms: dict, badges: dict, htb_data: dict | None = None) -> str:
+    if htb_data is None:
+        htb_data = read_optional_json(HACKTHEBOX, {})
+    room_count = len(rooms.get("rooms", []))
+    badge_count = len(badges.get("badges", []))
+
+    htb_machines = len(_htb_list(htb_data, "labs", "machines"))
+    htb_sherlocks = len(_htb_list(htb_data, "labs", "sherlocks"))
+    htb_total_labs = htb_machines + htb_sherlocks
+
+    writeup_stubs = 0
+    writeups_dir = ROOT / "writeups"
+    if writeups_dir.exists():
+        writeup_stubs = len([p for p in writeups_dir.rglob("*.md") if "templates" not in p.parts])
+
+    return (
+        "## Portfolio Statistics\n\n"
+        "| Category | Recorded Count | Description |\n"
+        "|---|---|---|\n"
+        f"| TryHackMe Rooms | {room_count} | Completed hands-on training rooms |\n"
+        f"| TryHackMe Badges | {badge_count} | Earned achievement badges |\n"
+        f"| Hack The Box Labs | {htb_total_labs} | Completed Machines and Sherlocks |\n"
+        f"| Practical Write-up Stubs | {writeup_stubs} | Maintained lab notes and template stubs |\n"
+        "| Security Projects | 3 | Hardware, embedded systems, and security automation |"
+    )
+
+
+def build_sync_engine_note() -> str:
+    return (
+        "## Automated Sync Engine\n\n"
+        "This portfolio is maintained using a custom local Python synchronisation tool "
+        "that collects and validates training evidence from supported cybersecurity platforms. "
+        "For complete architecture, CLI usage, privacy rules, and local session management, "
+        "see [docs/SYNC_ENGINE.md](docs/SYNC_ENGINE.md)."
+    )
+
+
+def build_contact_section() -> str:
+    return (
+        "## Contact & Profiles\n\n"
+        "- **GitHub**: [github.com/Pre-Mortem](https://github.com/Pre-Mortem)\n"
+        "- **TryHackMe**: [tryhackme.com/p/PreMortem](https://tryhackme.com/p/PreMortem)\n"
+        "- **Hack The Box**: [htb.site/PreMortem](https://htb.site/PreMortem)"
+    )
+
+
+def build_tryhackme_detailed(profile: dict, rooms: dict, badges: dict) -> str:
+    rows = []
+    ordered = sorted(rooms.get("rooms", []), key=lambda item: item.get("completed", ""), reverse=True)
+    for room in ordered:
+        name = room.get("name", "").replace("|", "\\|")
+        if room.get("url"):
+            name = f"[{name}]({room['url']})"
+        rows.append(f"| {name} | {room.get('difficulty') or '—'} | {room.get('completed', '—')} |")
+    if not rows:
+        rows.append("| No rooms recorded yet | — | — |")
+
+    badge_showcase = build_badge_showcase(badges.get("badges", []))
+    progress_summary = build_progress_summary(rooms, badges)
+    milestones = build_milestones(len(rooms.get("rooms", [])))
+    last_sync = format_sync_timestamp(profile.get("last_sync"))
+
+    return f"""## TryHackMe
+
+**Profile:** [PreMortem]({PROFILE_URL})<br>
+**Last local sync:** {last_sync}
+
+{progress_summary}
+
+### Completed Rooms
 
 | Room | Difficulty | Completed |
 |---|---|---|
@@ -695,20 +813,49 @@ A growing collection of achievements earned through completed TryHackMe rooms an
 
 _Portfolio progress milestones — a personal tracker, not official TryHackMe badges._
 
-{milestones}
+{milestones}"""
 
-This section is generated locally from my authenticated TryHackMe profile. Browser cookies remain on my own computer and are excluded from Git.
-{END}"""
+
+def build_cisco_detailed() -> str:
+    return (
+        "## Cisco Networking Academy\n\n"
+        "Cisco Networking Academy progress has not been added yet. When integrated, "
+        "this section will display course titles, completion status, badges, and completion dates "
+        "without publishing real names or account holder credentials."
+    )
+
+
+def render(profile: dict, rooms: dict, badges: dict, htb_data: dict | None = None) -> str:
+    if htb_data is None:
+        htb_data = read_optional_json(HACKTHEBOX, {})
 
     sections = [
         build_qualification_section(),
         build_projects_section(),
         build_skills_section(rooms, badges),
         build_evidence_section(),
-        build_hackthebox_section(),
-        tryhackme,
+        "## Training Platforms\n\n" + "\n\n".join([
+            build_tryhackme_summary(profile, rooms, badges),
+            build_hackthebox_summary(htb_data),
+            build_cisco_summary(),
+        ]),
+        build_portfolio_stats(rooms, badges, htb_data),
+        build_sync_engine_note(),
+        build_contact_section(),
     ]
     return GEN_START + "\n" + "\n\n".join(sections) + "\n" + GEN_END
+
+
+def render_training(profile: dict, rooms: dict, badges: dict, htb_data: dict | None = None) -> str:
+    if htb_data is None:
+        htb_data = read_optional_json(HACKTHEBOX, {})
+
+    sections = [
+        build_tryhackme_detailed(profile, rooms, badges),
+        build_hackthebox_section(htb_data),
+        build_cisco_detailed(),
+    ]
+    return TRAINING_START + "\n" + "\n\n".join(sections) + "\n" + TRAINING_END
 
 
 def update_readme(section: str) -> None:
@@ -717,6 +864,29 @@ def update_readme(section: str) -> None:
     if not pattern.search(text):
         raise SystemExit("README is missing portfolio generated markers")
     README.write_text(pattern.sub(lambda _match: section, text), encoding="utf-8")
+
+
+def update_training_md(section: str) -> None:
+    if not TRAINING_MD.exists():
+        initial = (
+            "# Cybersecurity Training History — PreMortem\n\n"
+            "Detailed training activity maintained automatically by the "
+            "[Cybersecurity Portfolio Sync Engine](docs/SYNC_ENGINE.md).\n\n"
+            f"{TRAINING_START}\n{TRAINING_END}\n"
+        )
+        TRAINING_MD.write_text(initial, encoding="utf-8")
+    text = TRAINING_MD.read_text(encoding="utf-8")
+    pattern = re.compile(re.escape(TRAINING_START) + r".*?" + re.escape(TRAINING_END), re.DOTALL)
+    if not pattern.search(text):
+        initial = (
+            "# Cybersecurity Training History — PreMortem\n\n"
+            "Detailed training activity maintained automatically by the "
+            "[Cybersecurity Portfolio Sync Engine](docs/SYNC_ENGINE.md).\n\n"
+            f"{TRAINING_START}\n{TRAINING_END}\n"
+        )
+        TRAINING_MD.write_text(initial, encoding="utf-8")
+        text = TRAINING_MD.read_text(encoding="utf-8")
+    TRAINING_MD.write_text(pattern.sub(lambda _match: section, text), encoding="utf-8")
 
 
 def normalise_room(raw: dict) -> dict | None:
@@ -831,7 +1001,7 @@ def browser_sync(args) -> int:
         "sync_method": "isolated-authenticated-browser",
     })
     write_json(PROFILE, profile)
-    update_readme(render(profile, rooms_data, badges_data))
+    regenerate_readme()
 
     print(f"Found {len(discovered_rooms)} completed-room candidates.")
     print(f"Added {len(added)} new room(s).")
@@ -839,7 +1009,7 @@ def browser_sync(args) -> int:
         print(f"  + {room['name']}")
 
     if args.publish:
-        run_git("add", "README.md", "data", "writeups")
+        run_git("add", "--", *PUBLISH_ALLOWLIST)
         staged = run_git("diff", "--cached", "--quiet", check=False)
         if staged.returncode == 0:
             print("No repository changes to publish.")
@@ -871,7 +1041,7 @@ def add_room(args):
     data["rooms"].append(room)
     write_json(ROOMS, data)
     writeup_for(room)
-    update_readme(render(read_json(PROFILE, {}), data, read_json(BADGES, {"badges": []})))
+    regenerate_readme()
     print(f"Added {name}")
 
 
@@ -883,7 +1053,7 @@ PLATFORM_KEYS = ("tryhackme", "hackthebox")
 
 # Files the automated commit flow is ever allowed to stage. Browser profiles,
 # diagnostics, caches and temp files are deliberately excluded.
-PUBLISH_ALLOWLIST = ("README.md", "data", "writeups")
+PUBLISH_ALLOWLIST = ("README.md", "TRAINING.md", "docs", "data", "writeups")
 
 # Patterns that must never appear inside tracked data files.
 FORBIDDEN_DATA_PATTERNS = re.compile(
@@ -903,11 +1073,13 @@ class PlatformOutcome:
 
 
 def regenerate_readme() -> None:
-    """Regenerate the README from saved, validated local data only."""
+    """Regenerate README.md and TRAINING.md from saved, validated local data only."""
     profile = read_json(PROFILE, {})
     rooms = read_json(ROOMS, {"rooms": []})
     badges = read_json(BADGES, {"badges": []})
-    update_readme(render(profile, rooms, badges))
+    htb_data = read_optional_json(HACKTHEBOX, {})
+    update_readme(render(profile, rooms, badges, htb_data))
+    update_training_md(render_training(profile, rooms, badges, htb_data))
 
 
 def sync_tryhackme_platform() -> PlatformOutcome:
