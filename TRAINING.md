@@ -1,6 +1,8 @@
-# Cybersecurity Training History — PreMortem
+# Cybersecurity Training History — Pre-Mortem
 
-Detailed training activity maintained automatically by the [Cybersecurity Portfolio Sync Engine](docs/SYNC_ENGINE.md).
+This is the supporting training record for Pre-Mortem's cybersecurity
+portfolio. It contains detailed, evidence-backed activity generated from saved
+platform data by the [Cybersecurity Portfolio Sync Engine](docs/SYNC_ENGINE.md).
 
 <!-- TRAINING:START -->
 ## TryHackMe

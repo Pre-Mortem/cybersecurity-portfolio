@@ -6,7 +6,7 @@ This repository serves as a public cybersecurity CV and portfolio. Privacy, secu
 
 ## Public Identity
 
-- **Public Handle**: **PreMortem**
+- **Public Identity**: **Pre-Mortem**
 - **Public Profile URLs**:
   - TryHackMe: `https://tryhackme.com/p/PreMortem`
   - Hack The Box: `https://htb.site/PreMortem`
@@ -43,7 +43,8 @@ or unsafe Cisco data.
 - Room and machine names, categories, tags, operating systems, and difficulty tiers.
 - Completion timestamps and active/retired status.
 - Publicly verifiable badges, milestones, and certifications.
-- Safe public profile URLs and handle (**PreMortem**).
+- Safe public profile URLs and the public identity (**Pre-Mortem**). External
+  platform usernames retain the spelling required by those platforms.
 
 ### What IS NEVER Collected or Published
 - **No Flags**: `user.txt`, `root.txt`, THM/HTB flags.

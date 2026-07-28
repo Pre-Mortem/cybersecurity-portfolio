@@ -263,18 +263,14 @@ QUALIFICATIONS = [
 
 
 def build_qualification_section() -> str:
-    rows = "\n".join(
-        f"| {md_cell(q['title'])} | {md_cell(q['reference'])} | "
-        f"{md_cell(q['provider'])} | {md_cell(q['status'])} |"
-        for q in QUALIFICATIONS
-    )
+    qualification = QUALIFICATIONS[0]
     return (
-        "## Qualifications\n\n"
-        "| Qualification | Reference | Provider | Status |\n"
-        "|---|---|---|---|\n"
-        f"{rows}\n\n"
-        "_Unit evidence, assignments and completed units will be added to this "
-        "repository as the course progresses._"
+        "## Current Qualifications and Training\n\n"
+        f"**{md_cell(qualification['title'])}**<br>\n"
+        f"{md_cell(qualification['provider'])} · {md_cell(qualification['status'])}\n\n"
+        "Alongside formal study, I am building practical evidence through TryHackMe "
+        "labs and project-based development, while preparing to expand the record "
+        "through Hack The Box and Cisco Networking Academy."
     )
 
 
@@ -460,7 +456,6 @@ def _evidence_link(title: str, target: str) -> str:
 
 def build_evidence_section() -> str:
     completed_items = []
-    stub_count = 0
 
     writeups_dir = ROOT / "writeups"
     if writeups_dir.exists():
@@ -471,8 +466,6 @@ def build_evidence_section() -> str:
             rel = path.relative_to(ROOT).as_posix()
             if status.lower() == "completed":
                 completed_items.append(_evidence_link(title, rel))
-            else:
-                stub_count += 1
 
     manifest = read_optional_json(EVIDENCE, {})
     if isinstance(manifest, dict):
@@ -492,14 +485,11 @@ def build_evidence_section() -> str:
     header = "## Practical Labs and Reports\n\n"
     parts = []
     if completed_items:
-        parts.append("**Completed Security Research & Reports**\n\n" + "\n".join(completed_items))
+        parts.append("### Completed Reports\n\n" + "\n".join(completed_items))
     else:
-        parts.append("_Completed security research and practical reports will be featured here as completed._")
-
-    if stub_count > 0:
         parts.append(
-            f"_Note: {stub_count} room write-up stubs are maintained in [`writeups/tryhackme/`](writeups/tryhackme) "
-            "as note-taking templates for completed TryHackMe rooms._"
+            "Completed practical reports will be added here as they are finished. "
+            "Draft notes and templates are not presented as completed work."
         )
 
     return header + "\n\n".join(parts)
@@ -924,6 +914,72 @@ def build_cisco_detailed(data: dict | None = None) -> str:
     return "\n\n".join(parts)
 
 
+def _summary_count(label: str, count: int) -> str:
+    noun = label.lower()
+    if count == 1 and noun.endswith("s"):
+        noun = noun[:-1]
+    return f"{count} {noun}"
+
+
+def build_training_snapshot(
+    rooms: dict,
+    badges: dict,
+    htb_data: dict | None = None,
+    cisco_data: dict | None = None,
+) -> str:
+    """Build a compact recruiter-facing summary from validated saved evidence."""
+    if not isinstance(htb_data, dict):
+        htb_data = {}
+
+    room_count = len(rooms.get("rooms") or [])
+    badge_count = len(badges.get("badges") or [])
+    lines = []
+    if room_count or badge_count:
+        lines.append(
+            f"- **TryHackMe:** {room_count} completed rooms and {badge_count} earned badges."
+        )
+
+    focus_areas = []
+    if _rooms_matching(rooms, ("networking", "lan", "dns")):
+        focus_areas.append("networking fundamentals")
+    if _rooms_matching(rooms, ("linux",)):
+        focus_areas.append("Linux fundamentals")
+    if _rooms_matching(
+        rooms,
+        ("web", "walking an application", "content discovery", "subdomain",
+         "idor", "authentication bypass"),
+    ):
+        focus_areas.append("web security")
+    if focus_areas:
+        lines.append("- **Current lab focus:** " + ", ".join(focus_areas) + ".")
+
+    htb_totals = _htb_totals(htb_data)
+    if htb_totals:
+        htb_summary = ", ".join(_summary_count(label, count) for label, count in htb_totals)
+        lines.append(f"- **Hack The Box:** {htb_summary} recorded.")
+
+    cisco_data, cisco_state = _validated_cisco_data(cisco_data)
+    if cisco_state == "available":
+        cisco_totals = [
+            (label, count) for label, count in _cisco_counts(cisco_data) if count
+        ]
+        if cisco_totals:
+            cisco_summary = ", ".join(
+                _summary_count(label, count) for label, count in cisco_totals
+            )
+            lines.append(f"- **Cisco Networking Academy:** {cisco_summary} recorded.")
+
+    if not lines:
+        lines.append("Verified practical training evidence will appear here as it is completed.")
+
+    return (
+        "## Practical Training Snapshot\n\n"
+        + "\n".join(lines)
+        + "\n\nSee [TRAINING.md](TRAINING.md) for the complete room history, badges, "
+        "completion dates, milestones, and platform-specific evidence."
+    )
+
+
 def render(
     profile: dict,
     rooms: dict,
@@ -931,22 +987,14 @@ def render(
     htb_data: dict | None = None,
     cisco_data: dict | None = None,
 ) -> str:
+    del profile
     if htb_data is None:
         htb_data = read_optional_json(HACKTHEBOX, {})
 
     sections = [
         build_qualification_section(),
-        build_projects_section(),
-        build_skills_section(rooms, badges),
+        build_training_snapshot(rooms, badges, htb_data, cisco_data),
         build_evidence_section(),
-        "## Training Platforms\n\n" + "\n\n".join([
-            build_tryhackme_summary(profile, rooms, badges),
-            build_hackthebox_summary(htb_data),
-            build_cisco_summary(cisco_data),
-        ]),
-        build_portfolio_stats(rooms, badges, htb_data, cisco_data),
-        build_sync_engine_note(),
-        build_contact_section(),
     ]
     return GEN_START + "\n" + "\n\n".join(sections) + "\n" + GEN_END
 
@@ -980,8 +1028,10 @@ def update_readme(section: str) -> None:
 def update_training_md(section: str) -> None:
     if not TRAINING_MD.exists():
         initial = (
-            "# Cybersecurity Training History — PreMortem\n\n"
-            "Detailed training activity maintained automatically by the "
+            "# Cybersecurity Training History — Pre-Mortem\n\n"
+            "This is the supporting training record for Pre-Mortem's cybersecurity "
+            "portfolio. It contains detailed, evidence-backed activity generated from "
+            "saved platform data by the "
             "[Cybersecurity Portfolio Sync Engine](docs/SYNC_ENGINE.md).\n\n"
             f"{TRAINING_START}\n{TRAINING_END}\n"
         )
@@ -990,8 +1040,10 @@ def update_training_md(section: str) -> None:
     pattern = re.compile(re.escape(TRAINING_START) + r".*?" + re.escape(TRAINING_END), re.DOTALL)
     if not pattern.search(text):
         initial = (
-            "# Cybersecurity Training History — PreMortem\n\n"
-            "Detailed training activity maintained automatically by the "
+            "# Cybersecurity Training History — Pre-Mortem\n\n"
+            "This is the supporting training record for Pre-Mortem's cybersecurity "
+            "portfolio. It contains detailed, evidence-backed activity generated from "
+            "saved platform data by the "
             "[Cybersecurity Portfolio Sync Engine](docs/SYNC_ENGINE.md).\n\n"
             f"{TRAINING_START}\n{TRAINING_END}\n"
         )

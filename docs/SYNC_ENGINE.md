@@ -20,7 +20,13 @@ portfolio.py (CLI & Orchestrator)
 ```
 
 - **Data Storage**: Collected evidence is stored in versioned JSON files under `data/` (`rooms.json`, `badges.json`, `profile.json`, `hackthebox.json`, `cisco_netacad.json`, `evidence.json`).
-- **Rendering Engine**: `portfolio.py` parses saved JSON data and populates bounded comment markers in `README.md` (compact summary) and `TRAINING.md` (detailed platform history).
+- **Rendering Engine**: `portfolio.py` parses saved JSON data and updates bounded
+  comment markers. In `README.md`, the generated region is deliberately narrow:
+  qualification status, a compact training snapshot, and completed report
+  links. The personal introduction, About Me, demonstrated capabilities,
+  project narratives, Current Focus, and contact details are maintained outside
+  that region and cannot be replaced by a platform sync. `TRAINING.md` remains
+  the detailed generated platform history.
 
 ---
 

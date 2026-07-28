@@ -112,7 +112,9 @@ class TestIdempotentRender(unittest.TestCase):
         b = portfolio.render(profile, rooms, badges)
         self.assertEqual(a, b)
         self.assertIn(portfolio.GEN_START, a)
-        self.assertIn(portfolio.START, a)  # THM markers nested inside
+        self.assertNotIn(portfolio.START, a)
+        self.assertIn("Practical Training Snapshot", a)
+        self.assertNotIn("Automated Sync Engine", a)
 
     def test_marker_updates_are_stable_and_preserve_authored_content(self):
         profile = portfolio.read_json(portfolio.PROFILE, {})
@@ -126,12 +128,20 @@ class TestIdempotentRender(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             readme = Path(directory) / "README.md"
             training = Path(directory) / "TRAINING.md"
-            readme.write_text(
-                "Recruiter-authored introduction.\n\n"
+            authored_readme = (
+                "# Pre-Mortem — Cybersecurity Portfolio\n\n"
+                "I am developing practical cybersecurity skills.\n\n"
+                "## About Me\n\nPractical work and safe design.\n\n"
+                "## What I Bring\n\nEvidence-backed capabilities.\n\n"
+                "## Selected Security Projects\n\n"
+                "### PacketPunch\n\nPersonal project narrative.\n\n"
+                "### ESP32-S2 AI HID Typer\n\nPersonal project narrative.\n\n"
+                "### Cybersecurity Portfolio Automation\n\nPersonal project narrative.\n\n"
                 f"{portfolio.GEN_START}\nold generated content\n{portfolio.GEN_END}\n\n"
-                "Recruiter-authored closing.\n",
-                encoding="utf-8",
+                "## Current Focus\n\nCurrent development priorities.\n\n"
+                "## Contact and Profiles\n\nPre-Mortem only.\n"
             )
+            readme.write_text(authored_readme, encoding="utf-8")
             training.write_text(
                 "Training-authored introduction.\n\n"
                 f"{portfolio.TRAINING_START}\nold generated content\n{portfolio.TRAINING_END}\n\n"
@@ -150,10 +160,107 @@ class TestIdempotentRender(unittest.TestCase):
                           training.read_text(encoding="utf-8"))
 
             self.assertEqual(first, second)
-            self.assertTrue(first[0].startswith("Recruiter-authored introduction."))
-            self.assertTrue(first[0].endswith("Recruiter-authored closing.\n"))
+            for personal_section in (
+                "I am developing practical cybersecurity skills.",
+                "## About Me",
+                "## What I Bring",
+                "### PacketPunch",
+                "### ESP32-S2 AI HID Typer",
+                "### Cybersecurity Portfolio Automation",
+                "## Current Focus",
+                "## Contact and Profiles",
+            ):
+                self.assertIn(personal_section, first[0])
             self.assertTrue(first[1].startswith("Training-authored introduction."))
             self.assertTrue(first[1].endswith("Training-authored closing.\n"))
+
+    def test_empty_platforms_do_not_create_prominent_readme_sections(self):
+        rendered = portfolio.render(
+            {},
+            {"rooms": []},
+            {"badges": []},
+            htb.empty_schema(),
+            cisco.empty_schema(),
+        )
+        self.assertNotIn("Hack The Box Summary", rendered)
+        self.assertNotIn("Hack The Box progress has not", rendered)
+        self.assertNotIn("Cisco Networking Academy Summary", rendered)
+        self.assertNotIn("Offline integration foundation", rendered)
+        self.assertNotIn("Not yet synced", rendered)
+
+    def test_populated_platforms_add_only_concise_snapshot_counts(self):
+        cisco_data = json.loads(
+            (FIXTURES / "cisco_valid.json").read_text(encoding="utf-8")
+        )
+        rendered = portfolio.render(
+            {},
+            {"rooms": []},
+            {"badges": []},
+            _sample_htb(),
+            cisco_data,
+        )
+        self.assertIn("**Hack The Box:**", rendered)
+        self.assertIn("1 machine", rendered)
+        self.assertIn("**Cisco Networking Academy:**", rendered)
+        self.assertIn("1 course", rendered)
+        self.assertNotIn("Fiction Box", rendered)
+        self.assertNotIn("Fixture Networking Basics", rendered)
+
+    def test_private_identity_values_are_not_rendered(self):
+        private_values = (
+            "PRIVATE-LEGAL-NAME",
+            "PRIVATE-FIRST-NAME",
+            "private.person@example.invalid",
+            "/private/home/path",
+        )
+        htb_data = _sample_htb()
+        htb_data["public_identity"] = {
+            "username": private_values[0],
+            "profile_url": "https://example.invalid/private",
+        }
+        rendered = portfolio.render(
+            {"real_name": private_values[1], "email": private_values[2]},
+            {"rooms": [{"name": private_values[3]}]},
+            {"badges": []},
+            htb_data,
+            cisco.empty_schema(),
+        )
+        for private_value in private_values:
+            self.assertNotIn(private_value, rendered)
+
+    def test_repository_readme_starts_with_personal_sections(self):
+        readme = portfolio.README.read_text(encoding="utf-8")
+        expected_order = (
+            "# Pre-Mortem — Cybersecurity Portfolio",
+            "## About Me",
+            "## What I Bring",
+            "## Selected Security Projects",
+            portfolio.GEN_START,
+            "## Current Focus",
+            "## Contact and Profiles",
+        )
+        positions = [readme.index(section) for section in expected_order]
+        self.assertEqual(positions, sorted(positions))
+        self.assertEqual(readme.count(portfolio.GEN_START), 1)
+        self.assertEqual(readme.count(portfolio.GEN_END), 1)
+        self.assertNotIn("16 room write-up stubs", readme)
+        self.assertNotIn("Offline integration foundation ready", readme)
+
+    def test_training_document_retains_detailed_evidence(self):
+        profile = portfolio.read_json(portfolio.PROFILE, {})
+        rooms = portfolio.read_json(portfolio.ROOMS, {"rooms": []})
+        badges = portfolio.read_json(portfolio.BADGES, {"badges": []})
+        cisco_data = json.loads(
+            (FIXTURES / "cisco_valid.json").read_text(encoding="utf-8")
+        )
+        rendered = portfolio.render_training(
+            profile, rooms, badges, _sample_htb(), cisco_data
+        )
+        self.assertIn("### Completed Rooms", rendered)
+        self.assertIn("Linux Fundamentals Part 1", rendered)
+        self.assertIn("### Achievement Cabinet", rendered)
+        self.assertIn("Fiction Box", rendered)
+        self.assertIn("Fixture Networking Basics", rendered)
 
 
 class TestInteractiveMenu(unittest.TestCase):
@@ -234,6 +341,58 @@ class TestRunSyncOutcomes(unittest.TestCase):
              mock.patch.object(portfolio, "run_git", return_value=SimpleNamespace(stdout="")):
             rc = portfolio.run_sync(["tryhackme", "cisco"], interactive=False, auto_push=False)
         self.assertEqual(rc, 0)
+
+    def test_platform_failure_does_not_erase_personal_readme(self):
+        bad = portfolio.PlatformOutcome(
+            "Cisco Networking Academy", False, "not implemented"
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            paths = {
+                "README": root / "README.md",
+                "TRAINING_MD": root / "TRAINING.md",
+                "PROFILE": root / "profile.json",
+                "ROOMS": root / "rooms.json",
+                "BADGES": root / "badges.json",
+                "HACKTHEBOX": root / "hackthebox.json",
+                "CISCO_NETACAD": root / "cisco_netacad.json",
+            }
+            paths["README"].write_text(
+                portfolio.README.read_text(encoding="utf-8"), encoding="utf-8"
+            )
+            paths["TRAINING_MD"].write_text(
+                portfolio.TRAINING_MD.read_text(encoding="utf-8"), encoding="utf-8"
+            )
+            paths["PROFILE"].write_text("{}", encoding="utf-8")
+            paths["ROOMS"].write_text('{"rooms": []}', encoding="utf-8")
+            paths["BADGES"].write_text('{"badges": []}', encoding="utf-8")
+            paths["HACKTHEBOX"].write_text(
+                json.dumps(htb.empty_schema()), encoding="utf-8"
+            )
+            paths["CISCO_NETACAD"].write_text(
+                json.dumps(cisco.empty_schema()), encoding="utf-8"
+            )
+
+            with mock.patch.multiple(portfolio, **paths), \
+                 mock.patch.object(portfolio, "sync_cisco_platform", return_value=bad), \
+                 mock.patch.object(
+                     portfolio, "run_git",
+                     return_value=SimpleNamespace(stdout="", returncode=0),
+                 ):
+                rc = portfolio.run_sync(
+                    ["cisco"], interactive=False, auto_push=False
+                )
+
+            rewritten = paths["README"].read_text(encoding="utf-8")
+            self.assertEqual(rc, 1)
+            for personal_section in (
+                "## About Me",
+                "## What I Bring",
+                "## Selected Security Projects",
+                "## Current Focus",
+                "## Contact and Profiles",
+            ):
+                self.assertIn(personal_section, rewritten)
 
 
 class TestPublishSafety(unittest.TestCase):
