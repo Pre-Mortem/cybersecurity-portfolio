@@ -1,0 +1,170 @@
+#!/bin/zsh
+# Install a double-clickable macOS launcher for the existing sync-portfolio tool.
+
+set -u
+setopt pipe_fail
+
+typeset -i dry_run=0
+typeset desktop_dir="${HOME:?HOME is not set}/Desktop"
+
+usage() {
+  print "Usage: ./install-desktop-shortcut [--dry-run] [--desktop-dir PATH]"
+}
+
+fail() {
+  print -u2 "Desktop shortcut installation failed: $1"
+  exit 1
+}
+
+while (( $# > 0 )); do
+  case "$1" in
+    --dry-run)
+      dry_run=1
+      shift
+      ;;
+    --desktop-dir)
+      (( $# >= 2 )) || fail "--desktop-dir requires a path"
+      desktop_dir="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    *)
+      fail "unknown option: $1"
+      ;;
+  esac
+done
+
+typeset installer_path="${0:A}"
+typeset repository_root="${installer_path:h:A}"
+typeset sync_command="${repository_root}/sync-portfolio"
+typeset launcher_name="Sync Cybersecurity Portfolio.command"
+typeset launcher_path="${desktop_dir:A}/${launcher_name}"
+
+[[ -e "${repository_root}/.git" ]] ||
+  fail "installer is not inside a Git repository root: ${repository_root}"
+typeset discovered_root
+discovered_root="$(git -C "${repository_root}" rev-parse --show-toplevel 2>/dev/null)" ||
+  fail "unable to validate the Git repository root"
+[[ "${discovered_root:A}" == "${repository_root}" ]] ||
+  fail "repository root validation did not match the installer location"
+[[ -f "${repository_root}/portfolio.py" ]] ||
+  fail "portfolio.py is missing from the repository root"
+[[ -f "${sync_command}" ]] ||
+  fail "sync-portfolio is missing: ${sync_command}"
+[[ -x "${sync_command}" ]] ||
+  fail "sync-portfolio is not executable: ${sync_command}"
+
+if [[ -e "${desktop_dir}" && ! -d "${desktop_dir}" ]]; then
+  fail "Desktop target exists but is not a directory: ${desktop_dir}"
+fi
+if [[ -L "${desktop_dir}" ]]; then
+  fail "refusing to use a symbolic link as the Desktop target: ${desktop_dir}"
+fi
+if (( ! dry_run )) && [[ ! -d "${desktop_dir}" ]]; then
+  mkdir -p "${desktop_dir}" || fail "unable to create Desktop directory: ${desktop_dir}"
+fi
+if [[ -L "${launcher_path}" ]]; then
+  fail "refusing to replace a symbolic-link launcher: ${launcher_path}"
+fi
+if [[ -e "${launcher_path}" && ! -f "${launcher_path}" ]]; then
+  fail "refusing to replace a non-file launcher target: ${launcher_path}"
+fi
+
+typeset repository_quoted="${(q)repository_root}"
+typeset work_dir
+if (( dry_run )); then
+  work_dir="$(mktemp -d "${TMPDIR:-/tmp}/portfolio-launcher.XXXXXX")" ||
+    fail "unable to create a temporary validation directory"
+else
+  work_dir="${desktop_dir:A}"
+fi
+typeset temporary_launcher
+temporary_launcher="$(mktemp "${work_dir}/.sync-portfolio-launcher.XXXXXX")" ||
+  fail "unable to create a temporary launcher"
+
+cleanup() {
+  rm -f "${temporary_launcher}"
+  if (( dry_run )); then
+    rmdir "${work_dir}" 2>/dev/null || true
+  fi
+}
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+{
+  print -r -- '#!/bin/zsh'
+  print -r -- ''
+  print -r -- 'set -u'
+  print -r -- 'setopt pipe_fail'
+  print -r -- ''
+  print -r -- "typeset -r REPOSITORY_ROOT=${repository_quoted}"
+  print -r -- ''
+  print -r -- 'pause_before_close() {'
+  print -r -- '  if [[ -t 0 && -t 1 ]]; then'
+  print -r -- '    print'
+  print -n -r -- "    print -n 'Press Return to close...'"
+  print
+  print -r -- '    IFS= read -r _'
+  print -r -- '  fi'
+  print -r -- '}'
+  print -r -- ''
+  print -r -- 'finish() {'
+  print -r -- '  typeset -i exit_code=$1'
+  print -r -- '  print'
+  print -r -- '  if (( exit_code == 0 )); then'
+  print -r -- "    print 'Cybersecurity portfolio sync completed successfully.'"
+  print -r -- '  else'
+  print -r -- "    print -u2 \"Cybersecurity portfolio sync failed with exit status \${exit_code}.\""
+  print -r -- '  fi'
+  print -r -- '  pause_before_close'
+  print -r -- '  exit "${exit_code}"'
+  print -r -- '}'
+  print -r -- ''
+  print -r -- 'if [[ ! -d "${REPOSITORY_ROOT}" ]]; then'
+  print -r -- '  print -u2 "Repository directory no longer exists: ${REPOSITORY_ROOT}"'
+  print -r -- '  finish 1'
+  print -r -- 'fi'
+  print -r -- 'if [[ ! -f "${REPOSITORY_ROOT}/sync-portfolio" ]]; then'
+  print -r -- '  print -u2 "sync-portfolio is missing from: ${REPOSITORY_ROOT}"'
+  print -r -- '  finish 1'
+  print -r -- 'fi'
+  print -r -- 'if [[ ! -x "${REPOSITORY_ROOT}/sync-portfolio" ]]; then'
+  print -r -- '  print -u2 "sync-portfolio is not executable in: ${REPOSITORY_ROOT}"'
+  print -r -- '  finish 1'
+  print -r -- 'fi'
+  print -r -- ''
+  print -r -- 'cd -- "${REPOSITORY_ROOT}" || {'
+  print -r -- '  print -u2 "Unable to open repository directory: ${REPOSITORY_ROOT}"'
+  print -r -- '  finish 1'
+  print -r -- '}'
+  print -r -- ''
+  print -r -- './sync-portfolio'
+  print -r -- 'typeset -i sync_status=$?'
+  print -r -- 'finish "${sync_status}"'
+} > "${temporary_launcher}" || fail "unable to write the temporary launcher"
+
+chmod 700 "${temporary_launcher}" ||
+  fail "unable to make the temporary launcher executable"
+[[ -s "${temporary_launcher}" ]] || fail "generated launcher is empty"
+[[ "$(head -n 1 "${temporary_launcher}")" == '#!/bin/zsh' ]] ||
+  fail "generated launcher has an invalid shebang"
+/bin/zsh -n "${temporary_launcher}" ||
+  fail "generated launcher failed zsh syntax validation"
+
+if (( dry_run )); then
+  print "Validated desktop shortcut for: ${launcher_path}"
+  exit 0
+fi
+
+mv -f "${temporary_launcher}" "${launcher_path}" ||
+  fail "unable to install launcher at: ${launcher_path}"
+chmod 700 "${launcher_path}" ||
+  fail "unable to make installed launcher executable"
+trap - EXIT HUP INT TERM
+
+print "Installed desktop shortcut: ${launcher_path}"

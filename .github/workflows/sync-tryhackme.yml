@@ -30,6 +30,10 @@ jobs:
       - name: Run deterministic tests
         # These tests never require a live account, browser or interactive login.
         run: python -m unittest discover -s tests
+      - name: Validate shell launchers
+        run: |
+          zsh -n sync-portfolio
+          zsh -n install-desktop-shortcut
       - name: Validate JSON data
         run: |
           python - <<'PY'

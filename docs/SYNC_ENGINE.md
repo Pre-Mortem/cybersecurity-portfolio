@@ -53,6 +53,32 @@ Run the interactive wrapper script or execute `portfolio.py` directly:
 python3 portfolio.py sync
 ```
 
+### macOS Desktop Shortcut
+
+Install a Finder-launchable shortcut with:
+
+```bash
+./install-desktop-shortcut
+```
+
+The installer validates this repository and its existing `./sync-portfolio`
+entry point, then creates the executable file:
+
+```text
+~/Desktop/Sync Cybersecurity Portfolio.command
+```
+
+Double-click that file in Finder to open the interactive sync menu in Terminal.
+The launcher changes into this repository and delegates directly to
+`./sync-portfolio`; it contains no duplicate sync logic and does not
+automatically commit or push. It reports the final exit status and pauses before
+closing when attached to an interactive Terminal.
+
+The installer is idempotent and safely replaces its own regular launcher file.
+Use `./install-desktop-shortcut --dry-run` to validate launcher generation
+without writing to the Desktop. `--desktop-dir PATH` is available for isolated
+testing.
+
 The menu options include:
 1. **TryHackMe** — Sync TryHackMe rooms, difficulty, and badges.
 2. **Hack The Box** — Sync HTB Labs and Academy activity.
