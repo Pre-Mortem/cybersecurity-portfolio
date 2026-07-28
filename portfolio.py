@@ -125,9 +125,9 @@ def build_badge_showcase(badges: list) -> str:
     """
     cells = []
     for badge in badges:
-        name = html.escape(str(badge.get("name") or "Badge"))
-        image = str(badge.get("image") or "").strip()
-        if image.lower().startswith(("http://", "https://")):
+        name = html.escape(safe_public_text(badge.get("name"), "Badge"))
+        image = tryhackme_badge_image_url(badge.get("image"))
+        if image:
             src = html.escape(image, quote=True)
             inner = f'<img src="{src}" alt="{name}" width="100"><br>\n<strong>{name}</strong>'
         else:
@@ -245,6 +245,50 @@ def safe_url(url) -> str | None:
     return None
 
 
+PRIVATE_TEXT_PATTERN = re.compile(
+    r"(?i)(?:"
+    r"/users/[^/\s]+|"
+    r"/home/[^/\s]+|"
+    r"[a-z]:\\users\\[^\\\s]+|"
+    r"[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9.-]+\.[a-z]{2,}"
+    r")"
+)
+
+
+def safe_public_text(value, fallback: str = "") -> str:
+    """Return display text only when it does not resemble private identity data."""
+    text = str(value or "").strip()
+    if not text or PRIVATE_TEXT_PATTERN.search(text):
+        return fallback
+    return text
+
+
+def tryhackme_room_url(value) -> str | None:
+    """Accept only canonical public TryHackMe room links."""
+    url = safe_url(value)
+    if not url:
+        return None
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or parsed.netloc.lower() != "tryhackme.com":
+        return None
+    if not parsed.path.startswith("/room/") or parsed.query or parsed.fragment:
+        return None
+    return url
+
+
+def tryhackme_badge_image_url(value) -> str | None:
+    """Accept only canonical public TryHackMe badge asset links."""
+    url = safe_url(value)
+    if not url:
+        return None
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or parsed.netloc.lower() != "assets.tryhackme.com":
+        return None
+    if not parsed.path.startswith("/img/badges/") or parsed.query or parsed.fragment:
+        return None
+    return url
+
+
 def md_cell(value) -> str:
     """Escape a value for safe use inside a Markdown table cell."""
     return html.escape(str(value)).replace("|", "\\|").replace("\n", " ")
@@ -265,9 +309,11 @@ QUALIFICATIONS = [
 def build_qualification_section() -> str:
     qualification = QUALIFICATIONS[0]
     return (
-        "## Current Qualifications and Training\n\n"
-        f"**{md_cell(qualification['title'])}**<br>\n"
-        f"{md_cell(qualification['provider'])} · {md_cell(qualification['status'])}\n\n"
+        "## Qualifications\n\n"
+        "| Qualification | Provider | Status |\n"
+        "|---|---|---|\n"
+        f"| {md_cell(qualification['title'])} | {md_cell(qualification['provider'])} "
+        f"| {md_cell(qualification['status'])} |\n\n"
         "Alongside formal study, I am building practical evidence through TryHackMe "
         "labs and project-based development, while preparing to expand the record "
         "through Hack The Box and Cisco Networking Academy."
@@ -349,14 +395,16 @@ def _rooms_matching(rooms: dict, keywords) -> list:
     for room in rooms.get("rooms", []):
         low = str(room.get("name", "")).lower()
         if any(keyword in low for keyword in keywords):
-            names.append(room.get("name", ""))
+            name = safe_public_text(room.get("name"))
+            if name:
+                names.append(name)
     return names
 
 
 def _badge_name(badges: dict, code: str) -> str:
     for badge in badges.get("badges", []):
         if badge.get("code") == code:
-            return str(badge.get("name") or "")
+            return safe_public_text(badge.get("name"))
     return ""
 
 
@@ -385,16 +433,19 @@ def build_skills_section(rooms: dict, badges: dict) -> str:
     # Skills whose evidence is project/tooling based (verified in-repo or above).
     matrix.extend([
         ("Python",
-         "Portfolio generation and synchronisation scripts "
-         "(portfolio.py, badge_sync.py, room_sync.py, room_difficulty_sync.py)"),
+         "Portfolio automation, platform adapters, rendering, schema validation, "
+         "privacy checks, and deterministic test tooling"),
         ("Git and GitHub",
-         "Version-controlled, automatically generated portfolio with JSON data validated in CI"),
+         "Version control, focused branches, GitHub Actions validation, and reproducible history"),
         ("Embedded systems",
-         "ESP32-S2 AI HID Typer and PacketPunch development"),
+         "PacketPunch and ESP32-S2 AI HID Typer development"),
         ("Android",
-         "Developing through the ESP32-S2 AI HID Typer Android client"),
+         "ESP32-S2 AI HID Typer companion application"),
         ("Security automation",
-         "Automated TryHackMe room, badge and difficulty synchronisation"),
+         "TryHackMe, Hack The Box, and Cisco evidence collection, sanitisation, and rendering"),
+        ("Privacy and safe design",
+         "Credential checks, isolated browser state, payload limits, sanitisation, "
+         "and failure-safe persistence"),
     ])
 
     rows = "\n".join(f"| {md_cell(label)} | {md_cell(evidence)} |" for label, evidence in matrix)
@@ -456,6 +507,7 @@ def _evidence_link(title: str, target: str) -> str:
 
 def build_evidence_section() -> str:
     completed_items = []
+    draft_items = []
 
     writeups_dir = ROOT / "writeups"
     if writeups_dir.exists():
@@ -466,6 +518,8 @@ def build_evidence_section() -> str:
             rel = path.relative_to(ROOT).as_posix()
             if status.lower() == "completed":
                 completed_items.append(_evidence_link(title, rel))
+            else:
+                draft_items.append(_evidence_link(title, rel))
 
     manifest = read_optional_json(EVIDENCE, {})
     if isinstance(manifest, dict):
@@ -482,17 +536,28 @@ def build_evidence_section() -> str:
                 if title and target:
                     completed_items.append(_evidence_link(title, target))
 
-    header = "## Practical Labs and Reports\n\n"
-    parts = []
+    parts = ["## Practical Labs and Reports"]
     if completed_items:
         parts.append("### Completed Reports\n\n" + "\n".join(completed_items))
     else:
         parts.append(
-            "Completed practical reports will be added here as they are finished. "
-            "Draft notes and templates are not presented as completed work."
+            "### Completed Reports\n\n"
+            "No completed reports are published yet. Reports will appear here only "
+            "after their notes have been reviewed and finished."
         )
 
-    return header + "\n\n".join(parts)
+    if draft_items:
+        parts.append(
+            "### Lab Notes and Drafts\n\n"
+            "These files relate to completed rooms, but the write-ups themselves are "
+            "still working notes or templates and are not presented as completed reports.\n\n"
+            "<details>\n"
+            f"<summary>{len(draft_items)} lab notes and write-up drafts</summary>\n\n"
+            + "\n".join(draft_items)
+            + "\n\n</details>"
+        )
+
+    return "\n\n".join(parts)
 
 
 # --- Hack The Box (future-ready, no invented data) -------------------------
@@ -778,21 +843,43 @@ def build_portfolio_stats(
     cisco_data, _cisco_state = _validated_cisco_data(cisco_data)
     cisco_courses = len(cisco_data.get("courses") or [])
 
-    writeup_stubs = 0
+    completed_reports = 0
+    writeup_drafts = 0
     writeups_dir = ROOT / "writeups"
     if writeups_dir.exists():
-        writeup_stubs = len([p for p in writeups_dir.rglob("*.md") if "templates" not in p.parts])
+        for path in writeups_dir.rglob("*.md"):
+            if "templates" in path.parts:
+                continue
+            _title, status = _read_title_and_status(path)
+            if status.lower() == "completed":
+                completed_reports += 1
+            else:
+                writeup_drafts += 1
 
+    rows = [
+        ("Completed TryHackMe Rooms", room_count, "Completed hands-on training rooms"),
+        ("Earned TryHackMe Badges", badge_count, "Achievement badges from completed training"),
+        ("Active Security Projects", len(PROJECTS), "Hardware, embedded systems, and automation"),
+    ]
+    if completed_reports:
+        rows.append(("Completed Practical Reports", completed_reports, "Reviewed published reports"))
+    if writeup_drafts:
+        rows.append(("Lab Notes and Drafts", writeup_drafts, "Clearly labelled work in progress"))
+    if htb_total_labs:
+        rows.append(("Hack The Box Labs", htb_total_labs, "Completed Machines and Sherlocks"))
+    if cisco_courses:
+        rows.append(("Cisco NetAcad Courses", cisco_courses, "Sanitised course achievement records"))
+
+    table_rows = "\n".join(
+        f"| {md_cell(label)} | {count} | {md_cell(description)} |"
+        for label, count, description in rows
+        if count
+    )
     return (
         "## Portfolio Statistics\n\n"
         "| Category | Recorded Count | Description |\n"
         "|---|---|---|\n"
-        f"| TryHackMe Rooms | {room_count} | Completed hands-on training rooms |\n"
-        f"| TryHackMe Badges | {badge_count} | Earned achievement badges |\n"
-        f"| Hack The Box Labs | {htb_total_labs} | Completed Machines and Sherlocks |\n"
-        f"| Cisco NetAcad Courses | {cisco_courses} | Sanitised course achievement records |\n"
-        f"| Practical Write-up Stubs | {writeup_stubs} | Maintained lab notes and template stubs |\n"
-        "| Security Projects | 3 | Hardware, embedded systems, and security automation |"
+        f"{table_rows}"
     )
 
 
@@ -819,10 +906,13 @@ def build_tryhackme_detailed(profile: dict, rooms: dict, badges: dict) -> str:
     rows = []
     ordered = sorted(rooms.get("rooms", []), key=lambda item: item.get("completed", ""), reverse=True)
     for room in ordered:
-        name = room.get("name", "").replace("|", "\\|")
-        if room.get("url"):
-            name = f"[{name}]({room['url']})"
-        rows.append(f"| {name} | {room.get('difficulty') or '—'} | {room.get('completed', '—')} |")
+        name = md_cell(safe_public_text(room.get("name"), "Sanitised room"))
+        room_url = tryhackme_room_url(room.get("url"))
+        if room_url:
+            name = f"[{name}]({room_url})"
+        difficulty = md_cell(safe_public_text(room.get("difficulty"), "—"))
+        completed = md_cell(safe_public_text(room.get("completed"), "—"))
+        rows.append(f"| {name} | {difficulty} | {completed} |")
     if not rows:
         rows.append("| No rooms recorded yet | — | — |")
 
@@ -927,18 +1017,12 @@ def build_training_snapshot(
     htb_data: dict | None = None,
     cisco_data: dict | None = None,
 ) -> str:
-    """Build a compact recruiter-facing summary from validated saved evidence."""
+    """Build a recruiter-facing overview from validated saved evidence."""
     if not isinstance(htb_data, dict):
         htb_data = {}
 
     room_count = len(rooms.get("rooms") or [])
     badge_count = len(badges.get("badges") or [])
-    lines = []
-    if room_count or badge_count:
-        lines.append(
-            f"- **TryHackMe:** {room_count} completed rooms and {badge_count} earned badges."
-        )
-
     focus_areas = []
     if _rooms_matching(rooms, ("networking", "lan", "dns")):
         focus_areas.append("networking fundamentals")
@@ -950,13 +1034,12 @@ def build_training_snapshot(
          "idor", "authentication bypass"),
     ):
         focus_areas.append("web security")
-    if focus_areas:
-        lines.append("- **Current lab focus:** " + ", ".join(focus_areas) + ".")
 
+    platform_lines = []
     htb_totals = _htb_totals(htb_data)
     if htb_totals:
         htb_summary = ", ".join(_summary_count(label, count) for label, count in htb_totals)
-        lines.append(f"- **Hack The Box:** {htb_summary} recorded.")
+        platform_lines.append(f"- **Hack The Box:** {htb_summary} recorded.")
 
     cisco_data, cisco_state = _validated_cisco_data(cisco_data)
     if cisco_state == "available":
@@ -967,16 +1050,72 @@ def build_training_snapshot(
             cisco_summary = ", ".join(
                 _summary_count(label, count) for label, count in cisco_totals
             )
-            lines.append(f"- **Cisco Networking Academy:** {cisco_summary} recorded.")
+            platform_lines.append(f"- **Cisco Networking Academy:** {cisco_summary} recorded.")
 
-    if not lines:
-        lines.append("Verified practical training evidence will appear here as it is completed.")
+    if not htb_totals and not platform_lines:
+        platform_lines.append(
+            "_Hack The Box and Cisco Networking Academy evidence will appear here "
+            "when completed activity is available._"
+        )
 
     return (
-        "## Practical Training Snapshot\n\n"
-        + "\n".join(lines)
-        + "\n\nSee [TRAINING.md](TRAINING.md) for the complete room history, badges, "
-        "completion dates, milestones, and platform-specific evidence."
+        "## Training Snapshot\n\n"
+        f"**TryHackMe profile:** [PreMortem]({PROFILE_URL})\n\n"
+        f"{build_progress_summary(rooms, badges)}\n\n"
+        f"**Current focus:** {', '.join(focus_areas) if focus_areas else 'practical security foundations'}.\n\n"
+        + "\n".join(platform_lines)
+        + "\n\n[View the complete training history in TRAINING.md](TRAINING.md)."
+    )
+
+
+def build_recent_rooms_section(rooms: dict, limit: int = 10) -> str:
+    """Render a concise, data-driven sample of the latest completed rooms."""
+    ordered = sorted(
+        rooms.get("rooms") or [],
+        key=lambda item: item.get("completed", ""),
+        reverse=True,
+    )[:limit]
+    if not ordered:
+        return ""
+
+    rows = []
+    for room in ordered:
+        name = md_cell(safe_public_text(room.get("name"), "Sanitised room"))
+        url = tryhackme_room_url(room.get("url"))
+        linked_name = f"[{name}]({url})" if url else name
+        rows.append(
+            f"| {linked_name} | {md_cell(safe_public_text(room.get('difficulty'), '—'))} "
+            f"| {md_cell(safe_public_text(room.get('completed'), '—'))} |"
+        )
+    return (
+        "## Recently Completed Rooms\n\n"
+        "| Room | Difficulty | Completed |\n"
+        "|---|---|---|\n"
+        + "\n".join(rows)
+        + "\n\nThe full completed-room record remains in [TRAINING.md](TRAINING.md#tryhackme)."
+    )
+
+
+def build_achievement_cabinet_section(badges: dict) -> str:
+    earned = badges.get("badges") or []
+    if not earned:
+        return ""
+    return (
+        "## Achievement Cabinet\n\n"
+        "Earned TryHackMe badges generated from the saved canonical badge data. "
+        "Each badge links to its public achievement page.\n\n"
+        + build_badge_showcase(earned)
+    )
+
+
+def build_room_milestones_section(rooms: dict) -> str:
+    room_count = len(rooms.get("rooms") or [])
+    if not room_count:
+        return ""
+    return (
+        "## Room Milestones\n\n"
+        "_Portfolio progress milestones — a personal tracker, not official TryHackMe badges._\n\n"
+        + build_milestones(room_count)
     )
 
 
@@ -993,10 +1132,15 @@ def render(
 
     sections = [
         build_qualification_section(),
+        build_skills_section(rooms, badges),
         build_training_snapshot(rooms, badges, htb_data, cisco_data),
+        build_recent_rooms_section(rooms),
+        build_achievement_cabinet_section(badges),
+        build_room_milestones_section(rooms),
         build_evidence_section(),
+        build_portfolio_stats(rooms, badges, htb_data, cisco_data),
     ]
-    return GEN_START + "\n" + "\n\n".join(sections) + "\n" + GEN_END
+    return GEN_START + "\n" + "\n\n".join(section for section in sections if section) + "\n" + GEN_END
 
 
 def render_training(

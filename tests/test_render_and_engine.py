@@ -113,7 +113,8 @@ class TestIdempotentRender(unittest.TestCase):
         self.assertEqual(a, b)
         self.assertIn(portfolio.GEN_START, a)
         self.assertNotIn(portfolio.START, a)
-        self.assertIn("Practical Training Snapshot", a)
+        self.assertIn("## Training Snapshot", a)
+        self.assertIn("## Achievement Cabinet", a)
         self.assertNotIn("Automated Sync Engine", a)
 
     def test_marker_updates_are_stable_and_preserve_authored_content(self):
@@ -171,6 +172,17 @@ class TestIdempotentRender(unittest.TestCase):
                 "## Contact and Profiles",
             ):
                 self.assertIn(personal_section, first[0])
+            for evidence_section in (
+                "## Qualifications",
+                "## Skills and Evidence",
+                "## Training Snapshot",
+                "## Recently Completed Rooms",
+                "## Achievement Cabinet",
+                "## Room Milestones",
+                "## Practical Labs and Reports",
+                "## Portfolio Statistics",
+            ):
+                self.assertIn(evidence_section, first[0])
             self.assertTrue(first[1].startswith("Training-authored introduction."))
             self.assertTrue(first[1].endswith("Training-authored closing.\n"))
 
@@ -187,6 +199,10 @@ class TestIdempotentRender(unittest.TestCase):
         self.assertNotIn("Cisco Networking Academy Summary", rendered)
         self.assertNotIn("Offline integration foundation", rendered)
         self.assertNotIn("Not yet synced", rendered)
+        self.assertIn(
+            "Hack The Box and Cisco Networking Academy evidence will appear",
+            rendered,
+        )
 
     def test_populated_platforms_add_only_concise_snapshot_counts(self):
         cisco_data = json.loads(
@@ -205,6 +221,92 @@ class TestIdempotentRender(unittest.TestCase):
         self.assertIn("1 course", rendered)
         self.assertNotIn("Fiction Box", rendered)
         self.assertNotIn("Fixture Networking Basics", rendered)
+
+    def test_readme_render_restores_full_public_evidence(self):
+        profile = portfolio.read_json(portfolio.PROFILE, {})
+        rooms = portfolio.read_json(portfolio.ROOMS, {"rooms": []})
+        badges = portfolio.read_json(portfolio.BADGES, {"badges": []})
+        rendered = portfolio.render(
+            profile,
+            rooms,
+            badges,
+            htb.empty_schema(),
+            cisco.empty_schema(),
+        )
+
+        expected_sections = (
+            "## Qualifications",
+            "## Skills and Evidence",
+            "## Training Snapshot",
+            "## Recently Completed Rooms",
+            "## Achievement Cabinet",
+            "## Room Milestones",
+            "## Practical Labs and Reports",
+            "### Lab Notes and Drafts",
+            "## Portfolio Statistics",
+        )
+        for section in expected_sections:
+            self.assertIn(section, rendered)
+        self.assertIn("Rooms Completed</strong>&nbsp;<br>16", rendered)
+        self.assertIn("Badges Earned</strong>&nbsp;<br>6", rendered)
+        self.assertIn("Easy</strong>&nbsp;<br>15", rendered)
+        self.assertIn("Info</strong>&nbsp;<br>1", rendered)
+        self.assertIn("16 lab notes and write-up drafts", rendered)
+        self.assertNotIn("### Hack The Box Summary", rendered)
+        self.assertNotIn("### Cisco Networking Academy Summary", rendered)
+
+    def test_all_badges_render_as_clickable_images(self):
+        badges = portfolio.read_json(portfolio.BADGES, {"badges": []})
+        rendered = portfolio.build_achievement_cabinet_section(badges)
+        self.assertEqual(rendered.count("<img src="), len(badges["badges"]))
+        for badge in badges["badges"]:
+            self.assertIn(badge["name"], rendered)
+            self.assertIn(badge["image"], rendered)
+            self.assertIn(portfolio.badge_page_url(badge["code"]), rendered)
+
+    def test_recent_rooms_are_data_driven_linked_and_limited(self):
+        rooms = portfolio.read_json(portfolio.ROOMS, {"rooms": []})
+        rendered = portfolio.build_recent_rooms_section(rooms)
+        table_rows = [line for line in rendered.splitlines() if line.startswith("| [")]
+        self.assertEqual(len(table_rows), 10)
+        for room in rooms["rooms"][:10]:
+            self.assertIn(room["name"], rendered)
+            self.assertIn(room["url"], rendered)
+        self.assertNotIn(rooms["rooms"][10]["name"], rendered)
+
+    def test_unsafe_room_identity_and_link_are_scrubbed(self):
+        rendered = portfolio.build_recent_rooms_section(
+            {
+                "rooms": [
+                    {
+                        "name": "/Users/private-user/private.person@example.invalid",
+                        "url": "https://example.invalid/private?token=secret",
+                        "difficulty": "Easy",
+                        "completed": "2026-07-28",
+                    }
+                ]
+            }
+        )
+        self.assertIn("Sanitised room", rendered)
+        self.assertNotIn("/Users/private-user", rendered)
+        self.assertNotIn("example.invalid", rendered)
+        self.assertNotIn("token=secret", rendered)
+
+        badge_rendered = portfolio.build_achievement_cabinet_section(
+            {
+                "badges": [
+                    {
+                        "name": "private.person@example.invalid",
+                        "code": "safe-code",
+                        "image": "https://example.invalid/badge.png?token=secret",
+                    }
+                ]
+            }
+        )
+        self.assertIn("<strong>Badge</strong>", badge_rendered)
+        self.assertNotIn("private.person", badge_rendered)
+        self.assertNotIn("<img src=", badge_rendered)
+        self.assertNotIn("token=secret", badge_rendered)
 
     def test_private_identity_values_are_not_rendered(self):
         private_values = (
@@ -245,6 +347,22 @@ class TestIdempotentRender(unittest.TestCase):
         self.assertEqual(readme.count(portfolio.GEN_END), 1)
         self.assertNotIn("16 room write-up stubs", readme)
         self.assertNotIn("Offline integration foundation ready", readme)
+        for evidence_section in (
+            "## Qualifications",
+            "## Skills and Evidence",
+            "## Training Snapshot",
+            "## Recently Completed Rooms",
+            "## Achievement Cabinet",
+            "## Room Milestones",
+            "## Practical Labs and Reports",
+            "## Portfolio Statistics",
+        ):
+            self.assertIn(evidence_section, readme)
+        self.assertNotRegex(readme, r"/Users/[^/\s]+")
+        self.assertNotRegex(
+            readme,
+            r"(?i)[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9.-]+\.[a-z]{2,}",
+        )
 
     def test_training_document_retains_detailed_evidence(self):
         profile = portfolio.read_json(portfolio.PROFILE, {})
@@ -393,6 +511,14 @@ class TestRunSyncOutcomes(unittest.TestCase):
                 "## Contact and Profiles",
             ):
                 self.assertIn(personal_section, rewritten)
+            for evidence_section in (
+                "## Qualifications",
+                "## Skills and Evidence",
+                "## Training Snapshot",
+                "## Practical Labs and Reports",
+                "## Portfolio Statistics",
+            ):
+                self.assertIn(evidence_section, rewritten)
 
 
 class TestPublishSafety(unittest.TestCase):
