@@ -23,7 +23,12 @@ This document outlines completed milestones and future enhancements for the **Pr
 ---
 
 ## Milestone 3 — Recruiter CV Redesign & Training History Separation (Completed)
-- [x] Redesign `README.md` as a concise, recruiter-facing cybersecurity CV and portfolio for **Pre-Mortem**.
+- [x] Redesign `README.md` as a personal-first, recruiter-facing cybersecurity portfolio for **Pre-Mortem**.
+- [x] Keep visible proof on the front page: evidence-backed skills, live training
+  totals, recent rooms, earned badge cabinet, personal milestones, report links,
+  and concise portfolio statistics.
+- [x] Protect the introduction, About Me, project narratives, Current Focus, and
+  contact details outside the generated markers.
 - [x] Create `TRAINING.md` for comprehensive, multi-platform activity tables.
 - [x] Restructure documentation into `docs/` (`SYNC_ENGINE.md`, `AUTHENTICATION.md`, `PRIVACY.md`, `DATA_SCHEMA.md`, `ROADMAP.md`).
 - [x] Modular write-up status tracking (distinguishing completed research from template stubs).
