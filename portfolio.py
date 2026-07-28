@@ -17,8 +17,10 @@ ROOMS = ROOT / "data/rooms.json"
 PROFILE = ROOT / "data/profile.json"
 BADGES = ROOT / "data/badges.json"
 HACKTHEBOX = ROOT / "data/hackthebox.json"
+CISCO_NETACAD = ROOT / "data/cisco_netacad.json"
 EVIDENCE = ROOT / "data/evidence.json"
 README = ROOT / "README.md"
+TRAINING_MD = ROOT / "TRAINING.md"
 BROWSER_STATE = ROOT / ".thm-browser"
 START = "<!-- THM:START -->"
 END = "<!-- THM:END -->"
@@ -27,6 +29,8 @@ END = "<!-- THM:END -->"
 # unaffected.
 GEN_START = "<!-- PORTFOLIO:START -->"
 GEN_END = "<!-- PORTFOLIO:END -->"
+TRAINING_START = "<!-- TRAINING:START -->"
+TRAINING_END = "<!-- TRAINING:END -->"
 PROFILE_URL = "https://tryhackme.com/p/PreMortem"
 REPO_URL = "https://github.com/Pre-Mortem/cybersecurity-portfolio"
 
@@ -58,6 +62,7 @@ def writeup_for(room: dict) -> None:
     path.write_text(f"""# {room['name']}
 
 - Platform: TryHackMe
+- Status: Template Stub
 - Completed: {room['completed']}
 - Room URL: {room.get('url') or 'Not recorded'}
 - Difficulty: {room.get('difficulty') or 'Not recorded'}
@@ -258,18 +263,14 @@ QUALIFICATIONS = [
 
 
 def build_qualification_section() -> str:
-    rows = "\n".join(
-        f"| {md_cell(q['title'])} | {md_cell(q['reference'])} | "
-        f"{md_cell(q['provider'])} | {md_cell(q['status'])} |"
-        for q in QUALIFICATIONS
-    )
+    qualification = QUALIFICATIONS[0]
     return (
-        "## Qualifications\n\n"
-        "| Qualification | Reference | Provider | Status |\n"
-        "|---|---|---|---|\n"
-        f"{rows}\n\n"
-        "_Unit evidence, assignments and completed units will be added to this "
-        "repository as the course progresses._"
+        "## Current Qualifications and Training\n\n"
+        f"**{md_cell(qualification['title'])}**<br>\n"
+        f"{md_cell(qualification['provider'])} · {md_cell(qualification['status'])}\n\n"
+        "Alongside formal study, I am building practical evidence through TryHackMe "
+        "labs and project-based development, while preparing to expand the record "
+        "through Hack The Box and Cisco Networking Academy."
     )
 
 
@@ -418,15 +419,22 @@ EVIDENCE_GROUPS = [
 ]
 
 
-def _read_title(path: Path) -> str:
+def _read_title_and_status(path: Path) -> tuple[str, str]:
+    title = path.stem
+    status = "Template Stub"
     try:
-        for line in path.read_text(encoding="utf-8").splitlines():
-            line = line.strip()
-            if line.startswith("# "):
-                return line[2:].strip()
+        content = path.read_text(encoding="utf-8")
+        for line in content.splitlines():
+            line_str = line.strip()
+            if line_str.startswith("# "):
+                title = line_str[2:].strip()
+            elif line_str.startswith("- Status:"):
+                status = line_str.split(":", 1)[1].strip()
+        if "Describe the room without exposing answers or flags" in content:
+            status = "Template Stub"
     except OSError:
         pass
-    return ""
+    return title, status
 
 
 def _evidence_link(title: str, target: str) -> str:
@@ -447,17 +455,18 @@ def _evidence_link(title: str, target: str) -> str:
 
 
 def build_evidence_section() -> str:
-    groups = {label: [] for label, _ in EVIDENCE_GROUPS}
+    completed_items = []
 
-    # Auto-discover lab write-ups that actually exist in the repository.
     writeups_dir = ROOT / "writeups"
     if writeups_dir.exists():
         for path in sorted(writeups_dir.rglob("*.md")):
-            title = _read_title(path) or path.stem
+            if "templates" in path.parts:
+                continue
+            title, status = _read_title_and_status(path)
             rel = path.relative_to(ROOT).as_posix()
-            groups["Lab write-ups"].append(_evidence_link(title, rel))
+            if status.lower() == "completed":
+                completed_items.append(_evidence_link(title, rel))
 
-    # Merge an optional manifest of further evidence (validated file paths / links).
     manifest = read_optional_json(EVIDENCE, {})
     if isinstance(manifest, dict):
         key_to_label = {key: label for label, key in EVIDENCE_GROUPS}
@@ -471,28 +480,19 @@ def build_evidence_section() -> str:
                 title = str(entry.get("title") or "").strip()
                 target = str(entry.get("path") or entry.get("url") or "").strip()
                 if title and target:
-                    groups[label].append(_evidence_link(title, target))
-
-    blocks = []
-    for label, _ in EVIDENCE_GROUPS:
-        items = groups[label]
-        if not items:
-            continue
-        listing = "\n".join(items)
-        if label == "Lab write-ups" and len(items) > 6:
-            blocks.append(
-                f"**{label}**\n\n"
-                f"<details>\n<summary>{len(items)} documents</summary>\n\n"
-                f"{listing}\n\n</details>"
-            )
-        else:
-            blocks.append(f"**{label}**\n\n{listing}")
+                    completed_items.append(_evidence_link(title, target))
 
     header = "## Practical Labs and Reports\n\n"
-    if not blocks:
-        return header + "Practical reports and lab evidence will be added as work is completed."
-    intro = "Evidence drawn from documents that exist in this repository.\n\n"
-    return header + intro + "\n\n".join(blocks)
+    parts = []
+    if completed_items:
+        parts.append("### Completed Reports\n\n" + "\n".join(completed_items))
+    else:
+        parts.append(
+            "Completed practical reports will be added here as they are finished. "
+            "Draft notes and templates are not presented as completed work."
+        )
+
+    return header + "\n\n".join(parts)
 
 
 # --- Hack The Box (future-ready, no invented data) -------------------------
@@ -564,14 +564,15 @@ def _htb_name_list(items: list) -> str:
     return "\n".join(f"- {md_cell(item.get('name'))}" for item in items)
 
 
-def build_hackthebox_section() -> str:
+def build_hackthebox_section(data: dict | None = None) -> str:
     """Render the Hack The Box section from data/hackthebox.json (new schema).
 
     Only categories with recorded data are shown; unsupported/empty categories
     never produce empty tables. All content is escaped and only http(s) links
     are emitted. No flags, answers or protected solution content are rendered.
     """
-    data = read_optional_json(HACKTHEBOX, {})
+    if data is None:
+        data = read_optional_json(HACKTHEBOX, {})
     if not isinstance(data, dict):
         data = {}
 
@@ -655,31 +656,189 @@ def build_hackthebox_section() -> str:
     return "\n\n".join(parts)
 
 
-def render(profile: dict, rooms: dict, badges: dict) -> str:
-    rows = []
-    ordered = sorted(rooms["rooms"], key=lambda item: item.get("completed", ""), reverse=True)
-    for room in ordered[:10]:
-        name = room["name"].replace("|", "\\|")
-        if room.get("url"):
-            name = f"[{name}]({room['url']})"
-        rows.append(f"| {name} | {room.get('difficulty') or '—'} | {room['completed']} |")
-    if not rows:
-        rows.append("| No rooms recorded yet | — | — |")
-
-    badge_showcase = build_badge_showcase(badges.get("badges", []))
-    progress_summary = build_progress_summary(rooms, badges)
-    milestones = build_milestones(len(rooms["rooms"]))
+def build_tryhackme_summary(profile: dict, rooms: dict, badges: dict) -> str:
     last_sync = format_sync_timestamp(profile.get("last_sync"))
+    progress_summary = build_progress_summary(rooms, badges)
 
-    tryhackme = f"""{START}
-## TryHackMe
+    room_list = rooms.get("rooms", [])
+    ordered = sorted(room_list, key=lambda item: item.get("completed", ""), reverse=True)
+    recent_names = [room.get("name", "") for room in ordered[:5] if room.get("name")]
+    recent_str = ", ".join(recent_names) if recent_names else "None recorded yet"
+
+    return f"""{START}
+### TryHackMe Summary
 
 **Profile:** [PreMortem]({PROFILE_URL})<br>
 **Last local sync:** {last_sync}
 
 {progress_summary}
 
-### Recently Completed Rooms
+**Recent Activity:** {recent_str}.<br>
+_See [TRAINING.md](TRAINING.md#tryhackme) for complete TryHackMe room history, badge showcase, and room milestones._
+{END}"""
+
+
+def build_hackthebox_summary(data: dict | None = None) -> str:
+    if data is None:
+        data = read_optional_json(HACKTHEBOX, {})
+    if not isinstance(data, dict):
+        data = {}
+
+    identity = data.get("public_identity") if isinstance(data.get("public_identity"), dict) else {}
+    username = html.escape(str(identity.get("username") or "PreMortem").strip())
+    profile_url = safe_url(identity.get("profile_url")) or "https://htb.site/PreMortem"
+    totals = _htb_totals(data)
+
+    header = "### Hack The Box Summary\n\n"
+    identity_line = f"**Profile:** [{username}]({profile_url})<br>**Last local sync:** {format_sync_timestamp(data.get('synced_at'))}"
+
+    if not totals:
+        return header + identity_line + "\n\n" + (
+            "Hack The Box integration is active. No completed labs recorded yet. "
+            "See [TRAINING.md](TRAINING.md#hack-the-box) for complete platform metrics."
+        )
+
+    cells = "\n".join(
+        f'<td align="center">&nbsp;<strong>{html.escape(label)}</strong>&nbsp;<br>{count}</td>'
+        for label, count in totals
+    )
+    table = f'<div align="center">\n\n<table>\n<tr>\n{cells}\n</tr>\n</table>\n\n</div>'
+    return header + identity_line + "\n\n" + table + "\n\n" + (
+        "_See [TRAINING.md](TRAINING.md#hack-the-box) for complete Hack The Box machine, "
+        "Sherlock, challenge, and Academy history._"
+    )
+
+
+def _validated_cisco_data(data: dict | None = None) -> tuple[dict, str]:
+    """Return safe Cisco data and its render state.
+
+    Invalid or malformed saved data is never rendered. Importing here keeps the
+    renderer compatible with installations that only use the legacy commands.
+    """
+    from platforms import cisco_netacad as cisco
+
+    if data is None:
+        data = read_optional_json(CISCO_NETACAD, None)
+    if not isinstance(data, dict) or cisco.validate_data(data):
+        return cisco.empty_schema("unavailable"), "unavailable"
+    return data, data.get("collection_status", "unavailable")
+
+
+def _cisco_counts(data: dict) -> list[tuple[str, int]]:
+    return [
+        ("Courses", len(data.get("courses") or [])),
+        ("Badges", len(data.get("badges") or [])),
+        ("Certificates", len(data.get("certificates") or [])),
+    ]
+
+
+def build_cisco_summary(data: dict | None = None) -> str:
+    data, state = _validated_cisco_data(data)
+    header = "### Cisco Networking Academy Summary\n\n"
+    if state == "unavailable":
+        return header + (
+            "**Status:** Saved Cisco data is unavailable or failed validation.<br>\n"
+            "_No Cisco account or identity data is rendered. Other platform data remains unaffected._"
+        )
+    if state != "available":
+        return header + (
+            "**Status:** Offline integration foundation ready; no achievements imported.<br>\n"
+            "_Live browser extraction remains a future milestone. Only sanitised, "
+            "non-identifying achievement metadata can be rendered._"
+        )
+
+    populated = [(label, count) for label, count in _cisco_counts(data) if count]
+    cells = "\n".join(
+        f'<td align="center">&nbsp;<strong>{label}</strong>&nbsp;<br>{count}</td>'
+        for label, count in populated
+    )
+    table = f'<div align="center">\n\n<table>\n<tr>\n{cells}\n</tr>\n</table>\n\n</div>'
+    return header + (
+        f"**Last local data update:** {format_sync_timestamp(data.get('synced_at'))}\n\n"
+        f"{table}\n\n"
+        "_See [TRAINING.md](TRAINING.md#cisco-networking-academy) for complete Cisco "
+        "course, badge, certificate, and skills metadata._"
+    )
+
+
+def build_portfolio_stats(
+    rooms: dict,
+    badges: dict,
+    htb_data: dict | None = None,
+    cisco_data: dict | None = None,
+) -> str:
+    if htb_data is None:
+        htb_data = read_optional_json(HACKTHEBOX, {})
+    room_count = len(rooms.get("rooms", []))
+    badge_count = len(badges.get("badges", []))
+
+    htb_machines = len(_htb_list(htb_data, "labs", "machines"))
+    htb_sherlocks = len(_htb_list(htb_data, "labs", "sherlocks"))
+    htb_total_labs = htb_machines + htb_sherlocks
+    cisco_data, _cisco_state = _validated_cisco_data(cisco_data)
+    cisco_courses = len(cisco_data.get("courses") or [])
+
+    writeup_stubs = 0
+    writeups_dir = ROOT / "writeups"
+    if writeups_dir.exists():
+        writeup_stubs = len([p for p in writeups_dir.rglob("*.md") if "templates" not in p.parts])
+
+    return (
+        "## Portfolio Statistics\n\n"
+        "| Category | Recorded Count | Description |\n"
+        "|---|---|---|\n"
+        f"| TryHackMe Rooms | {room_count} | Completed hands-on training rooms |\n"
+        f"| TryHackMe Badges | {badge_count} | Earned achievement badges |\n"
+        f"| Hack The Box Labs | {htb_total_labs} | Completed Machines and Sherlocks |\n"
+        f"| Cisco NetAcad Courses | {cisco_courses} | Sanitised course achievement records |\n"
+        f"| Practical Write-up Stubs | {writeup_stubs} | Maintained lab notes and template stubs |\n"
+        "| Security Projects | 3 | Hardware, embedded systems, and security automation |"
+    )
+
+
+def build_sync_engine_note() -> str:
+    return (
+        "## Automated Sync Engine\n\n"
+        "This portfolio is maintained using a custom local Python synchronisation tool "
+        "that collects and validates training evidence from supported cybersecurity platforms. "
+        "For complete architecture, CLI usage, privacy rules, and local session management, "
+        "see [docs/SYNC_ENGINE.md](docs/SYNC_ENGINE.md)."
+    )
+
+
+def build_contact_section() -> str:
+    return (
+        "## Contact & Profiles\n\n"
+        "- **GitHub**: [github.com/Pre-Mortem](https://github.com/Pre-Mortem)\n"
+        "- **TryHackMe**: [tryhackme.com/p/PreMortem](https://tryhackme.com/p/PreMortem)\n"
+        "- **Hack The Box**: [htb.site/PreMortem](https://htb.site/PreMortem)"
+    )
+
+
+def build_tryhackme_detailed(profile: dict, rooms: dict, badges: dict) -> str:
+    rows = []
+    ordered = sorted(rooms.get("rooms", []), key=lambda item: item.get("completed", ""), reverse=True)
+    for room in ordered:
+        name = room.get("name", "").replace("|", "\\|")
+        if room.get("url"):
+            name = f"[{name}]({room['url']})"
+        rows.append(f"| {name} | {room.get('difficulty') or '—'} | {room.get('completed', '—')} |")
+    if not rows:
+        rows.append("| No rooms recorded yet | — | — |")
+
+    badge_showcase = build_badge_showcase(badges.get("badges", []))
+    progress_summary = build_progress_summary(rooms, badges)
+    milestones = build_milestones(len(rooms.get("rooms", [])))
+    last_sync = format_sync_timestamp(profile.get("last_sync"))
+
+    return f"""## TryHackMe
+
+**Profile:** [PreMortem]({PROFILE_URL})<br>
+**Last local sync:** {last_sync}
+
+{progress_summary}
+
+### Completed Rooms
 
 | Room | Difficulty | Completed |
 |---|---|---|
@@ -695,20 +854,167 @@ A growing collection of achievements earned through completed TryHackMe rooms an
 
 _Portfolio progress milestones — a personal tracker, not official TryHackMe badges._
 
-{milestones}
+{milestones}"""
 
-This section is generated locally from my authenticated TryHackMe profile. Browser cookies remain on my own computer and are excluded from Git.
-{END}"""
+
+def _cisco_skills(skills) -> str:
+    return ", ".join(md_cell(skill) for skill in skills) if isinstance(skills, list) and skills else "—"
+
+
+def build_cisco_detailed(data: dict | None = None) -> str:
+    data, state = _validated_cisco_data(data)
+    header = "## Cisco Networking Academy\n\n"
+    if state == "unavailable":
+        return header + (
+            "Saved Cisco Networking Academy data is unavailable or failed privacy/schema "
+            "validation. Nothing from that file has been rendered."
+        )
+    if state != "available":
+        return header + (
+            "No Cisco Networking Academy achievements have been imported. The offline "
+            "schema, privacy scrubber, CLI selection, and saved-data renderer are ready; "
+            "interactive browser collection remains the next milestone."
+        )
+
+    parts = [
+        header.rstrip("\n"),
+        "**Last local data update:** " + format_sync_timestamp(data.get("synced_at")),
+    ]
+    courses = data.get("courses") or []
+    if courses:
+        rows = "\n".join(
+            f"| {md_cell(item.get('title'))} | {md_cell((item.get('status') or '').replace('_', ' ').title())} "
+            f"| {md_cell(item.get('completed_at') or '—')} | {_cisco_skills(item.get('skills'))} |"
+            for item in courses
+        )
+        parts.append(
+            "### Courses\n\n"
+            "| Course | Status | Completed | Skills |\n|---|---|---|---|\n" + rows
+        )
+    badges = data.get("badges") or []
+    if badges:
+        rows = "\n".join(
+            f"| {md_cell(item.get('title'))} | {md_cell(item.get('earned_at') or '—')} "
+            f"| {_cisco_skills(item.get('skills'))} |"
+            for item in badges
+        )
+        parts.append("### Badges\n\n| Badge | Earned | Skills |\n|---|---|---|\n" + rows)
+    certificates = data.get("certificates") or []
+    if certificates:
+        rows = "\n".join(
+            f"| {md_cell(item.get('title'))} | {md_cell(item.get('issued_at') or '—')} "
+            f"| {_cisco_skills(item.get('skills'))} |"
+            for item in certificates
+        )
+        parts.append("### Certificates\n\n| Certificate | Issued | Skills |\n|---|---|---|\n" + rows)
+    parts.append(
+        "Sanitised achievement metadata only. Names, email addresses, account and "
+        "certificate IDs, private URLs, cookies, tokens, and browser state are excluded."
+    )
+    return "\n\n".join(parts)
+
+
+def _summary_count(label: str, count: int) -> str:
+    noun = label.lower()
+    if count == 1 and noun.endswith("s"):
+        noun = noun[:-1]
+    return f"{count} {noun}"
+
+
+def build_training_snapshot(
+    rooms: dict,
+    badges: dict,
+    htb_data: dict | None = None,
+    cisco_data: dict | None = None,
+) -> str:
+    """Build a compact recruiter-facing summary from validated saved evidence."""
+    if not isinstance(htb_data, dict):
+        htb_data = {}
+
+    room_count = len(rooms.get("rooms") or [])
+    badge_count = len(badges.get("badges") or [])
+    lines = []
+    if room_count or badge_count:
+        lines.append(
+            f"- **TryHackMe:** {room_count} completed rooms and {badge_count} earned badges."
+        )
+
+    focus_areas = []
+    if _rooms_matching(rooms, ("networking", "lan", "dns")):
+        focus_areas.append("networking fundamentals")
+    if _rooms_matching(rooms, ("linux",)):
+        focus_areas.append("Linux fundamentals")
+    if _rooms_matching(
+        rooms,
+        ("web", "walking an application", "content discovery", "subdomain",
+         "idor", "authentication bypass"),
+    ):
+        focus_areas.append("web security")
+    if focus_areas:
+        lines.append("- **Current lab focus:** " + ", ".join(focus_areas) + ".")
+
+    htb_totals = _htb_totals(htb_data)
+    if htb_totals:
+        htb_summary = ", ".join(_summary_count(label, count) for label, count in htb_totals)
+        lines.append(f"- **Hack The Box:** {htb_summary} recorded.")
+
+    cisco_data, cisco_state = _validated_cisco_data(cisco_data)
+    if cisco_state == "available":
+        cisco_totals = [
+            (label, count) for label, count in _cisco_counts(cisco_data) if count
+        ]
+        if cisco_totals:
+            cisco_summary = ", ".join(
+                _summary_count(label, count) for label, count in cisco_totals
+            )
+            lines.append(f"- **Cisco Networking Academy:** {cisco_summary} recorded.")
+
+    if not lines:
+        lines.append("Verified practical training evidence will appear here as it is completed.")
+
+    return (
+        "## Practical Training Snapshot\n\n"
+        + "\n".join(lines)
+        + "\n\nSee [TRAINING.md](TRAINING.md) for the complete room history, badges, "
+        "completion dates, milestones, and platform-specific evidence."
+    )
+
+
+def render(
+    profile: dict,
+    rooms: dict,
+    badges: dict,
+    htb_data: dict | None = None,
+    cisco_data: dict | None = None,
+) -> str:
+    del profile
+    if htb_data is None:
+        htb_data = read_optional_json(HACKTHEBOX, {})
 
     sections = [
         build_qualification_section(),
-        build_projects_section(),
-        build_skills_section(rooms, badges),
+        build_training_snapshot(rooms, badges, htb_data, cisco_data),
         build_evidence_section(),
-        build_hackthebox_section(),
-        tryhackme,
     ]
     return GEN_START + "\n" + "\n\n".join(sections) + "\n" + GEN_END
+
+
+def render_training(
+    profile: dict,
+    rooms: dict,
+    badges: dict,
+    htb_data: dict | None = None,
+    cisco_data: dict | None = None,
+) -> str:
+    if htb_data is None:
+        htb_data = read_optional_json(HACKTHEBOX, {})
+
+    sections = [
+        build_tryhackme_detailed(profile, rooms, badges),
+        build_hackthebox_section(htb_data),
+        build_cisco_detailed(cisco_data),
+    ]
+    return TRAINING_START + "\n" + "\n\n".join(sections) + "\n" + TRAINING_END
 
 
 def update_readme(section: str) -> None:
@@ -717,6 +1023,33 @@ def update_readme(section: str) -> None:
     if not pattern.search(text):
         raise SystemExit("README is missing portfolio generated markers")
     README.write_text(pattern.sub(lambda _match: section, text), encoding="utf-8")
+
+
+def update_training_md(section: str) -> None:
+    if not TRAINING_MD.exists():
+        initial = (
+            "# Cybersecurity Training History — Pre-Mortem\n\n"
+            "This is the supporting training record for Pre-Mortem's cybersecurity "
+            "portfolio. It contains detailed, evidence-backed activity generated from "
+            "saved platform data by the "
+            "[Cybersecurity Portfolio Sync Engine](docs/SYNC_ENGINE.md).\n\n"
+            f"{TRAINING_START}\n{TRAINING_END}\n"
+        )
+        TRAINING_MD.write_text(initial, encoding="utf-8")
+    text = TRAINING_MD.read_text(encoding="utf-8")
+    pattern = re.compile(re.escape(TRAINING_START) + r".*?" + re.escape(TRAINING_END), re.DOTALL)
+    if not pattern.search(text):
+        initial = (
+            "# Cybersecurity Training History — Pre-Mortem\n\n"
+            "This is the supporting training record for Pre-Mortem's cybersecurity "
+            "portfolio. It contains detailed, evidence-backed activity generated from "
+            "saved platform data by the "
+            "[Cybersecurity Portfolio Sync Engine](docs/SYNC_ENGINE.md).\n\n"
+            f"{TRAINING_START}\n{TRAINING_END}\n"
+        )
+        TRAINING_MD.write_text(initial, encoding="utf-8")
+        text = TRAINING_MD.read_text(encoding="utf-8")
+    TRAINING_MD.write_text(pattern.sub(lambda _match: section, text), encoding="utf-8")
 
 
 def normalise_room(raw: dict) -> dict | None:
@@ -831,7 +1164,7 @@ def browser_sync(args) -> int:
         "sync_method": "isolated-authenticated-browser",
     })
     write_json(PROFILE, profile)
-    update_readme(render(profile, rooms_data, badges_data))
+    regenerate_readme()
 
     print(f"Found {len(discovered_rooms)} completed-room candidates.")
     print(f"Added {len(added)} new room(s).")
@@ -839,7 +1172,7 @@ def browser_sync(args) -> int:
         print(f"  + {room['name']}")
 
     if args.publish:
-        run_git("add", "README.md", "data", "writeups")
+        run_git("add", "--", *PUBLISH_ALLOWLIST)
         staged = run_git("diff", "--cached", "--quiet", check=False)
         if staged.returncode == 0:
             print("No repository changes to publish.")
@@ -871,7 +1204,7 @@ def add_room(args):
     data["rooms"].append(room)
     write_json(ROOMS, data)
     writeup_for(room)
-    update_readme(render(read_json(PROFILE, {}), data, read_json(BADGES, {"badges": []})))
+    regenerate_readme()
     print(f"Added {name}")
 
 
@@ -879,15 +1212,17 @@ def add_room(args):
 # Cybersecurity Portfolio Sync Engine
 # --------------------------------------------------------------------------- #
 
-PLATFORM_KEYS = ("tryhackme", "hackthebox")
+PLATFORM_KEYS = ("tryhackme", "hackthebox", "cisco")
 
 # Files the automated commit flow is ever allowed to stage. Browser profiles,
 # diagnostics, caches and temp files are deliberately excluded.
-PUBLISH_ALLOWLIST = ("README.md", "data", "writeups")
+PUBLISH_ALLOWLIST = ("README.md", "TRAINING.md", "docs", "data", "writeups")
 
 # Patterns that must never appear inside tracked data files.
 FORBIDDEN_DATA_PATTERNS = re.compile(
-    r"password|passwd|bearer|authorization|session[_-]?id|flag\{|htb\{|thm\{|user\.txt|root\.txt|-----BEGIN",
+    r"password|passwd|bearer|authorization|session[_-]?id|access[_-]?token|refresh[_-]?token|"
+    r"cookie|\"(?:email|account[_-]?id|user[_-]?id|certificate[_-]?id|private[_-]?url)\"\s*:|"
+    r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|flag\{|htb\{|thm\{|user\.txt|root\.txt|-----BEGIN",
     re.IGNORECASE,
 )
 
@@ -903,11 +1238,14 @@ class PlatformOutcome:
 
 
 def regenerate_readme() -> None:
-    """Regenerate the README from saved, validated local data only."""
+    """Regenerate README.md and TRAINING.md from saved, validated local data only."""
     profile = read_json(PROFILE, {})
     rooms = read_json(ROOMS, {"rooms": []})
     badges = read_json(BADGES, {"badges": []})
-    update_readme(render(profile, rooms, badges))
+    htb_data = read_optional_json(HACKTHEBOX, {})
+    cisco_data = read_optional_json(CISCO_NETACAD, None)
+    update_readme(render(profile, rooms, badges, htb_data, cisco_data))
+    update_training_md(render_training(profile, rooms, badges, htb_data, cisco_data))
 
 
 def sync_tryhackme_platform() -> PlatformOutcome:
@@ -942,6 +1280,16 @@ def sync_hackthebox_platform(interactive: bool) -> PlatformOutcome:
     return PlatformOutcome("Hack The Box", result.ok, result.message, result.counts)
 
 
+def sync_cisco_platform(interactive: bool) -> PlatformOutcome:
+    """Run Cisco through its isolated module (offline foundation for now)."""
+    try:
+        from platforms import cisco_netacad
+    except ImportError as exc:
+        return PlatformOutcome("Cisco Networking Academy", False, f"Cisco module unavailable: {exc}")
+    result = cisco_netacad.sync(interactive=interactive)
+    return PlatformOutcome("Cisco Networking Academy", result.ok, result.message, result.counts)
+
+
 def _git_paths_staged() -> list[str]:
     out = run_git("diff", "--cached", "--name-only", check=False)
     return [line for line in out.stdout.splitlines() if line.strip()]
@@ -952,7 +1300,7 @@ def _privacy_and_safety_checks() -> list[str]:
     problems = []
     staged = _git_paths_staged()
     for path in staged:
-        if re.search(r"(^|/)\.(thm|htb)-browser(/|$)", path) or ".htb-diagnostics" in path \
+        if re.search(r"(^|/)\.(thm|htb|cisco)-browser(/|$)", path) or ".htb-diagnostics" in path \
                 or ".htb-sync-cache" in path or path.endswith(".tmp"):
             problems.append(f"refusing to stage local artefact: {path}")
     # Scan staged data files for forbidden content.
@@ -1030,6 +1378,8 @@ def run_sync(requested: list[str], interactive: bool, auto_push: bool) -> int:
             outcomes.append(sync_tryhackme_platform())
         elif platform == "hackthebox":
             outcomes.append(sync_hackthebox_platform(interactive))
+        elif platform == "cisco":
+            outcomes.append(sync_cisco_platform(interactive))
 
     # Always regenerate from whatever valid saved data now exists.
     try:
@@ -1055,19 +1405,21 @@ def interactive_menu() -> int:
         "\nCybersecurity Portfolio Sync\n"
         "1. TryHackMe\n"
         "2. Hack The Box\n"
-        "3. Both platforms\n"
-        "4. Regenerate from saved data\n"
-        "5. Exit\n"
+        "3. Cisco Networking Academy\n"
+        "4. All platforms\n"
+        "5. Regenerate from saved data\n"
+        "6. Exit\n"
     )
     mapping = {
         "1": ["tryhackme"],
         "2": ["hackthebox"],
-        "3": ["tryhackme", "hackthebox"],
+        "3": ["cisco"],
+        "4": list(PLATFORM_KEYS),
     }
     while True:
         print(menu)
         try:
-            choice = input("Select an option [1-5]: ").strip()
+            choice = input("Select an option [1-6]: ").strip()
         except (EOFError, KeyboardInterrupt):
             print("\nCancelled.")
             return 0
@@ -1075,7 +1427,7 @@ def interactive_menu() -> int:
             requested = mapping[choice]
             print(f"\nSelected: {', '.join(requested)}. A browser may open for login.")
             return run_sync(requested, interactive=True, auto_push=False)
-        if choice == "4":
+        if choice == "5":
             try:
                 regenerate_readme()
                 print("README regenerated from saved data.")
@@ -1085,10 +1437,10 @@ def interactive_menu() -> int:
             if _confirm("Commit and push the regenerated README? [y/N] "):
                 publish_changes("Regenerate portfolio README")
             return 0
-        if choice == "5":
+        if choice == "6":
             print("Exiting.")
             return 0
-        print("Invalid selection. Please choose a number from 1 to 5.")
+        print("Invalid selection. Please choose a number from 1 to 6.")
 
 
 def cmd_sync(args) -> int:
@@ -1114,7 +1466,7 @@ def main():
     sub = parser.add_subparsers(dest="command", required=True)
 
     sync_parser = sub.add_parser("sync", help="interactive multi-platform sync menu")
-    sync_parser.add_argument("--platform", choices=("tryhackme", "hackthebox", "all"),
+    sync_parser.add_argument("--platform", choices=("tryhackme", "hackthebox", "cisco", "all"),
                              help="run a specific platform non-interactively (skips the menu)")
     sync_parser.add_argument("--non-interactive", action="store_true",
                              help="do not treat this as an interactive session")

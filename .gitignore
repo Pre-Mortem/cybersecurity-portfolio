@@ -2,6 +2,7 @@ config.json
 .venv/
 .thm-browser/
 .htb-browser/
+.cisco-browser/
 .htb-diagnostics/
 .htb-sync-cache/
 __pycache__/

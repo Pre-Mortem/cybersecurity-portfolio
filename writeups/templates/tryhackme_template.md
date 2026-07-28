@@ -1,10 +1,10 @@
-# Linux Fundamentals Part 1
+# [Room Name]
 
 - Platform: TryHackMe
-- Status: Template Stub
-- Completed: 2026-07-23
-- Room URL: https://tryhackme.com/room/linuxfundamentalspart1
-- Difficulty: Not recorded
+- Status: Template
+- Completed: [YYYY-MM-DD]
+- Room URL: [URL]
+- Difficulty: [Difficulty]
 
 ## What the Room Covered
 

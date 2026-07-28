@@ -1,0 +1,12 @@
+{
+  "schema_version": 999,
+  "platform": "cisco_netacad",
+  "synced_at": "not-a-timestamp",
+  "collection_status": "available",
+  "courses": {
+    "title": "Not a list"
+  },
+  "badges": [],
+  "certificates": [],
+  "unexpected_identity": "must not be accepted"
+}

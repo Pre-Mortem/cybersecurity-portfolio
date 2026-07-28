@@ -1,288 +1,137 @@
-# Cybersecurity Portfolio
+# Pre-Mortem — Cybersecurity Portfolio
 
-A working record of my cybersecurity learning and practical development. It brings
-together formal qualification progress, security engineering projects, hands-on lab
-work and evidence-backed skills, alongside automatically generated training activity
-from TryHackMe.
+I am developing practical cybersecurity skills through formal study, hands-on
+labs, software development, embedded systems, and security-focused hardware
+projects. I learn most effectively by building and testing real systems,
+investigating what goes wrong, and documenting how I improved them.
 
-<!-- PORTFOLIO:START -->
-## Qualifications
+I am currently completing a Level 3 Certificate in Cyber Security Practices
+while building evidence across networking, Linux, web security, Python,
+security automation, embedded systems, USB HID, Android, Git, and GitHub. I am
+working towards junior opportunities where I can keep developing in defensive
+security, security engineering, SOC or technical support work, embedded
+security, and security tooling.
 
-| Qualification | Reference | Provider | Status |
-|---|---|---|---|
-| Certificate in Cyber Security Practices — Level 3 | 603/5762/9 | Think Employment | In progress |
+## About Me
 
-_Unit evidence, assignments and completed units will be added to this repository as the course progresses._
+I am developing towards a cybersecurity career through practical, repeatable
+work rather than theory alone. Building tools helps me understand how
+technologies behave at their boundaries: how devices discover each other, how
+input becomes a hardware action, how failures propagate, and how data can be
+handled without exposing private information.
 
-## Security Projects
+I am comfortable tracing faults, testing assumptions against real behaviour,
+and iterating until a system is more reliable. I value clear documentation,
+evidence, privacy, and safe design. My strongest interests are defensive
+security, network visibility, embedded systems, modern hardware-assisted
+security work, and tools that make technical investigation more effective.
 
-Practical security engineering across hardware, embedded systems and automation.
+## What I Bring
 
-**PacketPunch** — _In development · Private repository_<br>
-A modern open-source pentesting hardware and software platform focused on current wireless, network and embedded security technologies.<br>
-**Focus:** pentesting hardware · wireless security · network visibility · embedded systems · ESP32-P4<br>
+- **Practical problem-solving:** I have worked through embedded HID timing and
+  reliability, dynamic network discovery, emergency-stop behaviour, UTF-8 and
+  keyboard-layout handling, and partial platform failures. These projects
+  require testing the real system rather than assuming the first design is
+  correct.
+- **Security-minded development:** My work uses defensive input validation,
+  payload limits, isolated browser profiles, privacy scrubbing, safe
+  persistence, failure isolation, and credential checks. I aim for automation
+  that fails safely and does not destroy previously verified data.
+- **Software and automation:** I use Python, JSON, command-line tooling,
+  deterministic tests, schema validation, GitHub Actions, and generated
+  documentation to turn repeatable technical work into maintainable systems.
+- **Hardware and embedded systems:** My projects cover ESP32-S2 and ESP32-P4
+  development, USB HID, Wi-Fi discovery, Android companion software, and
+  hardware-oriented security tooling.
+- **Documentation and evidence:** I maintain structured technical
+  documentation, milestone-based development, reproducible checks, training
+  evidence, and clear Git history so that claims can be traced to work.
+
+## Selected Security Projects
+
+### PacketPunch
+
+_In development · Private repository_
+
+I am developing PacketPunch as a modern security hardware and software platform
+for current wireless, network, and embedded technologies. The goal is to build
+useful open-source hardware around modern components and real network
+visibility needs, rather than reproduce older devices without reconsidering
+their design.
+
+My work currently focuses on the ESP32-P4, embedded systems, wireless security,
+network visibility, and the design of practical security tooling. The project
+demonstrates how I approach hardware constraints, system architecture, and the
+connection between physical devices and security workflows.
+
 _Security tools with impact._
 
-**ESP32-S2 AI HID Typer** — _In development · Private repository_<br>
-An ESP32-S2-based wireless HID keyboard system with an Android client, dynamic device discovery, emergency stop controls and defensive input validation.<br>
-**Focus:** embedded security · USB HID · ESP-IDF · Android · network discovery
+### ESP32-S2 AI HID Typer
 
-**[Cybersecurity Portfolio Automation](https://github.com/Pre-Mortem/cybersecurity-portfolio)** — _Active · Public repository_<br>
-A Python-based portfolio generator that synchronises training progress, badges and room difficulty data into a generated GitHub README.<br>
-**Focus:** Python · automation · JSON · GitHub · data validation
+_In development · Private repository_
 
-## Skills and Evidence
+I built an ESP32-S2-based wireless HID keyboard system with an Android
+companion application. It includes dynamic device discovery, emergency-stop
+controls, payload limits, defensive input validation, UTF-8 handling, and UK
+and US keyboard layouts.
 
-Each skill below is tied to work recorded in this repository — completed training, badges, projects or scripts. No self-rated scores are used.
+Developing it required me to investigate HID timing and reliability against
+real hardware behaviour rather than treating keyboard output as a simple text
+operation. The project demonstrates embedded debugging, networked device
+control, Android integration, safety controls, and iterative problem-solving
+across software and hardware.
 
-| Skill area | Evidence |
-|---|---|
-| Networking | TryHackMe rooms: DNS in Detail, What is Networking?, Intro to LAN; and the Networking Nerd badge |
-| Linux | TryHackMe rooms: Linux Fundamentals Part 1; and the cat linux.txt badge |
-| Web security | TryHackMe rooms: Walking An Application, Content Discovery, Subdomain Enumeration, Authentication Bypass, IDOR; and the Webbed badge |
-| Python | Portfolio generation and synchronisation scripts (portfolio.py, badge_sync.py, room_sync.py, room_difficulty_sync.py) |
-| Git and GitHub | Version-controlled, automatically generated portfolio with JSON data validated in CI |
-| Embedded systems | ESP32-S2 AI HID Typer and PacketPunch development |
-| Android | Developing through the ESP32-S2 AI HID Typer Android client |
-| Security automation | Automated TryHackMe room, badge and difficulty synchronisation |
+### [Cybersecurity Portfolio Automation](https://github.com/Pre-Mortem/cybersecurity-portfolio)
+
+_Active · Public repository_
+
+I built the Python automation behind this portfolio to collect training
+evidence, validate and sanitise structured data, preserve privacy, isolate
+platform failures, and update public evidence without publishing credentials or
+private account information.
+
+The system supports TryHackMe, Hack The Box, and an offline Cisco Networking
+Academy foundation. It demonstrates Python and CLI development, JSON schemas,
+automated testing, GitHub Actions, non-destructive persistence, and security
+controls around public data. Detailed architecture is available in
+[docs/SYNC_ENGINE.md](docs/SYNC_ENGINE.md).
+
+<!-- PORTFOLIO:START -->
+## Current Qualifications and Training
+
+**Certificate in Cyber Security Practices — Level 3**<br>
+Think Employment · In progress
+
+Alongside formal study, I am building practical evidence through TryHackMe labs and project-based development, while preparing to expand the record through Hack The Box and Cisco Networking Academy.
+
+## Practical Training Snapshot
+
+- **TryHackMe:** 16 completed rooms and 6 earned badges.
+- **Current lab focus:** networking fundamentals, Linux fundamentals, web security.
+
+See [TRAINING.md](TRAINING.md) for the complete room history, badges, completion dates, milestones, and platform-specific evidence.
 
 ## Practical Labs and Reports
 
-Evidence drawn from documents that exist in this repository.
-
-**Lab write-ups**
-
-<details>
-<summary>16 documents</summary>
-
-- [Authentication Bypass](writeups/tryhackme/authenticationbypass.md)
-- [Careers in Cyber](writeups/tryhackme/careersincyber.md)
-- [Content Discovery](writeups/tryhackme/contentdiscovery.md)
-- [DNS in Detail](writeups/tryhackme/dnsindetail.md)
-- [IDOR](writeups/tryhackme/idor.md)
-- [Intro to LAN](writeups/tryhackme/introtolan.md)
-- [Linux Fundamentals Part 1](writeups/tryhackme/linuxfundamentalspart1.md)
-- [Metasploit: Exploitation](writeups/tryhackme/metasploitexploitation.md)
-- [Metasploit: Introduction](writeups/tryhackme/metasploitintro.md)
-- [Metasploit: Meterpreter](writeups/tryhackme/meterpreter.md)
-- [Offensive Security Intro](writeups/tryhackme/offensivesecurityintro.md)
-- [Pentesting Fundamentals](writeups/tryhackme/pentestingfundamentals.md)
-- [Principles of Security](writeups/tryhackme/principlesofsecurity.md)
-- [Subdomain Enumeration](writeups/tryhackme/subdomainenumeration.md)
-- [Walking An Application](writeups/tryhackme/walkinganapplication.md)
-- [What is Networking?](writeups/tryhackme/whatisnetworking.md)
-
-</details>
-
-## Hack The Box
-
-Hack The Box progress has not been added yet. This section will track Machines, Sherlocks, Challenges and Academy modules as they are completed.
-
-<!-- THM:START -->
-## TryHackMe
-
-**Profile:** [PreMortem](https://tryhackme.com/p/PreMortem)<br>
-**Last local sync:** 23 July 2026, 11:44 UTC
-
-<div align="center">
-
-<table>
-<tr>
-<td align="center">&nbsp;<strong>Rooms Completed</strong>&nbsp;<br>16</td>
-<td align="center">&nbsp;<strong>Badges Earned</strong>&nbsp;<br>6</td>
-<td align="center">&nbsp;<strong>Easy</strong>&nbsp;<br>15</td>
-<td align="center">&nbsp;<strong>Info</strong>&nbsp;<br>1</td>
-</tr>
-</table>
-
-</div>
-
-### Recently Completed Rooms
-
-| Room | Difficulty | Completed |
-|---|---|---|
-| [Linux Fundamentals Part 1](https://tryhackme.com/room/linuxfundamentalspart1) | Easy | 2026-07-23 |
-| [DNS in Detail](https://tryhackme.com/room/dnsindetail) | Easy | 2026-07-23 |
-| [What is Networking?](https://tryhackme.com/room/whatisnetworking) | Easy | 2026-07-23 |
-| [Intro to LAN](https://tryhackme.com/room/introtolan) | Easy | 2026-07-23 |
-| [Walking An Application](https://tryhackme.com/room/walkinganapplication) | Easy | 2026-07-23 |
-| [Pentesting Fundamentals](https://tryhackme.com/room/pentestingfundamentals) | Easy | 2026-07-23 |
-| [Principles of Security](https://tryhackme.com/room/principlesofsecurity) | Easy | 2026-07-23 |
-| [Metasploit: Exploitation](https://tryhackme.com/room/metasploitexploitation) | Easy | 2026-07-23 |
-| [Content Discovery](https://tryhackme.com/room/contentdiscovery) | Easy | 2026-07-23 |
-| [Subdomain Enumeration](https://tryhackme.com/room/subdomainenumeration) | Easy | 2026-07-23 |
-
-### Achievement Cabinet
-
-A growing collection of achievements earned through completed TryHackMe rooms and learning paths.
-
-<div align="center">
-
-<table>
-<tr>
-<td align="center" width="130">
-<a href="https://tryhackme.com/PreMortem/badges/terminaled">
-<img src="https://assets.tryhackme.com/img/badges/linux.png" alt="cat linux.txt" width="100"><br>
-<strong>cat linux.txt</strong>
-</a>
-</td>
-<td align="center" width="130">
-<a href="https://tryhackme.com/PreMortem/badges/first-4-rooms">
-<img src="https://assets.tryhackme.com/img/badges/firstfour.png" alt="First Four" width="100"><br>
-<strong>First Four</strong>
-</a>
-</td>
-<td align="center" width="130">
-<a href="https://tryhackme.com/PreMortem/badges/metasploitable">
-<img src="https://assets.tryhackme.com/img/badges/metasploit.png" alt="Metasploitable" width="100"><br>
-<strong>Metasploitable</strong>
-</a>
-</td>
-</tr>
-<tr>
-<td align="center" width="130">
-<a href="https://tryhackme.com/PreMortem/badges/network-fundamentals">
-<img src="https://assets.tryhackme.com/img/badges/networkfundamentals.png" alt="Networking Nerd" width="100"><br>
-<strong>Networking Nerd</strong>
-</a>
-</td>
-<td align="center" width="130">
-<a href="https://tryhackme.com/PreMortem/badges/intro-to-pentesting">
-<img src="https://assets.tryhackme.com/img/badges/introtooffensivesecurity.png" alt="Pentesting Principles" width="100"><br>
-<strong>Pentesting Principles</strong>
-</a>
-</td>
-<td align="center" width="130">
-<a href="https://tryhackme.com/PreMortem/badges/web-fund">
-<img src="https://assets.tryhackme.com/img/badges/webbed.png" alt="Webbed" width="100"><br>
-<strong>Webbed</strong>
-</a>
-</td>
-</tr>
-</table>
-
-</div>
-
-### Room Milestones
-
-_Portfolio progress milestones — a personal tracker, not official TryHackMe badges._
-
-<div align="center">
-
-<table>
-<tr>
-<td align="center" width="120">
-✅<br><strong>10 Rooms</strong><br>Complete
-</td>
-<td align="center" width="120">
-🚧<br><strong>25 Rooms</strong><br>16 / 25
-</td>
-<td align="center" width="120">
-⬜<br><strong>50 Rooms</strong><br>Upcoming
-</td>
-<td align="center" width="120">
-⬜<br><strong>100 Rooms</strong><br>Upcoming
-</td>
-</tr>
-</table>
-
-</div>
-
-This section is generated locally from my authenticated TryHackMe profile. Browser cookies remain on my own computer and are excluded from Git.
-<!-- THM:END -->
+Completed practical reports will be added here as they are finished. Draft notes and templates are not presented as completed work.
 <!-- PORTFOLIO:END -->
 
-## About This Portfolio
+## Current Focus
 
-The generated sections above are produced locally by the **Cybersecurity Portfolio
-Sync Engine** ([portfolio.py](portfolio.py)) from validated JSON data, then written
-back into this README between the generated markers. The renderer is kept separate
-from platform authentication and data extraction (in [`platforms/`](platforms)).
+I am currently:
 
-### Supported platforms
+- progressing the Level 3 Certificate in Cyber Security Practices;
+- strengthening networking and Linux fundamentals;
+- developing web security knowledge through hands-on labs;
+- expanding practical experience across security training platforms;
+- building embedded and hardware-assisted security tools;
+- improving Python-based security automation and validation; and
+- turning completed practical work into clear, publishable reports.
 
-- **TryHackMe** — completed rooms, room difficulty and badges.
-- **Hack The Box** — Labs (machines, Sherlocks, challenges, badges, rank) and Academy
-  (modules, paths, badges, certifications), plus public profile identity. Achievement
-  **metadata only**.
+## Contact and Profiles
 
-### Running the sync menu
+I use **Pre-Mortem** as my public identity.
 
-```bash
-git clone https://github.com/Pre-Mortem/cybersecurity-portfolio.git
-cd cybersecurity-portfolio
-chmod +x setup sync-portfolio sync-tryhackme
-./setup
-./sync-portfolio
-```
-
-The menu offers TryHackMe, Hack The Box, both, regenerate-from-saved-data, or exit.
-Non-interactive equivalents:
-
-```bash
-python portfolio.py sync --platform tryhackme
-python portfolio.py sync --platform hackthebox
-python portfolio.py sync --platform all
-python portfolio.py render          # regenerate README from saved data only
-```
-
-Nothing is ever committed automatically. After a sync the engine prints a summary and
-asks before committing; `--push` may be supplied explicitly for automation. If one
-platform fails, the other's data is kept and previously synced data is preserved.
-
-### Local browser sessions
-
-Each platform authenticates interactively in its own persistent browser profile:
-`.thm-browser/` for TryHackMe and `.htb-browser/` for Hack The Box. These hold login
-state, are excluded by `.gitignore`, and are never committed, logged or shared. To
-reset a Hack The Box login safely, simply delete `.htb-browser/` and sign in again on
-the next sync. Hack The Box uses a unified account, so login may redirect between the
-HTB Account, Labs and Academy and may prompt for 2FA — all handled manually by you in
-the browser.
-
-### What is collected
-
-Public achievement metadata only: item names, difficulty, category, operating system,
-active/retired status, completion or issue dates, badges and certifications, and the
-public username/profile URL.
-
-### What is never collected
-
-Passwords, email addresses, 2FA or recovery codes, access or bearer tokens, raw
-cookies, session/local storage, internal account IDs, avatars, machine or challenge
-flags, Sherlock or Academy answers, solution steps, or VPN configuration. In line with
-Hack The Box content rules, only *that* something was completed is published — never
-*how*. Write-up stubs are not generated for active HTB content.
-
-### Roadmap
-
-**Completed by this milestone**
-
-- Multi-platform selection menu
-- Hack The Box browser authentication
-- Hack The Box sync (Labs + Academy)
-- Unified rendering across platforms
-- Optional commit and push
-
-**Next milestone — Cisco Networking Academy** (not implemented here)
-
-- Dedicated `.cisco-browser` session
-- Course, badge, certificate and completion-date sync
-- Sanitised `data/cisco_netacad.json`
-- Platform-level privacy controls, with profile identity hidden by default where
-  possible
-
-### Limitations
-
-- Live login cannot run in CI: authentication is interactive and may require 2FA, so
-  the automated tests never depend on a live account. CI only runs the deterministic
-  unit tests, compiles the modules and validates JSON.
-- Hack The Box categories are synced only where the authenticated web app reliably
-  exposes them; anything not reliably retrievable is left empty rather than fabricated.
-
-**Repository rules**
-
-- No TryHackMe flags, Hack The Box flags or copied answers
-- No passwords, cookies, tokens or API keys
-- No sensitive personal or client information
-- Every claim is supported by completed work or evidence in this repository
+- [GitHub — Pre-Mortem](https://github.com/Pre-Mortem)
+- [TryHackMe — PreMortem](https://tryhackme.com/p/PreMortem)
+- [Hack The Box — PreMortem](https://htb.site/PreMortem)
