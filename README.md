@@ -136,7 +136,7 @@ Each skill below is tied to work recorded in this repository — completed train
 ## TryHackMe
 
 **Profile:** [PreMortem](https://tryhackme.com/p/PreMortem)<br>
-**Last local sync:** 23 July 2026, 11:44 UTC
+**Last local sync:** 28 July 2026, 13:58 UTC
 
 <div align="center">
 

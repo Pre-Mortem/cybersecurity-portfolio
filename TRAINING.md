@@ -8,7 +8,7 @@ platform data by the [Cybersecurity Portfolio Sync Engine](docs/SYNC_ENGINE.md).
 ## TryHackMe
 
 **Profile:** [PreMortem](https://tryhackme.com/p/PreMortem)<br>
-**Last local sync:** 23 July 2026, 11:44 UTC
+**Last local sync:** 28 July 2026, 13:58 UTC
 
 <div align="center">
 
