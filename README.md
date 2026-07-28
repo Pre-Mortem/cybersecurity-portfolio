@@ -14,9 +14,15 @@ security, and security tooling.
 
 ## Profile Snapshot
 
-- **Qualification:** Certificate in Cyber Security Practices — Level 3
-  (603/5762/9), Think Employment — in progress
 <!-- PROFILE-SNAPSHOT:START -->
+- **Qualifications:** Two completed NCFE Level 2 qualifications in cyber security principles and coding; currently completing a Level 3 Certificate in Cyber Security Practices with Think Employment.
+
+| Qualification | Awarding body / provider | Level | Status | Awarded |
+|---|---|---:|---|---|
+| NCFE Level 2 Certificate in Understanding Coding | NCFE | 2 | Completed | 6 August 2025 |
+| NCFE Level 2 Certificate in the Principles of Cyber Security | NCFE | 2 | Completed | 29 May 2025 |
+| Certificate in Cyber Security Practices | Think Employment | 3 | In progress | — |
+
 - **TryHackMe evidence:** 27 completed rooms and 6 earned badges
 <!-- PROFILE-SNAPSHOT:END -->
 - **Key areas:** networking, Linux, web security, Python, security automation,
@@ -68,6 +74,16 @@ security work, and tools that make technical investigation more effective.
   and [lab notes](#practical-reports-and-lab-evidence) keep that evidence visible.
 
 ## Selected Security Projects
+
+<!-- PROJECTS:START -->
+| Project | Status | Progress | Summary |
+|---|---|---|---|
+| PacketPunch | In development · Private repository | Not quantified | A modern security hardware and software platform focused on current wireless, network and embedded technologies. |
+| ESP32-S2 AI HID Typer | In development · Private repository | Not quantified | An ESP32-S2 wireless HID keyboard system with an Android companion, dynamic discovery, emergency-stop controls and defensive input validation. |
+| [Cybersecurity Portfolio Automation](https://github.com/Pre-Mortem/cybersecurity-portfolio) | Active · Public repository | Active maintenance | Privacy-conscious Python automation for collecting, validating and rendering public cybersecurity training evidence. |
+| HackPod | In development · Private repository | 33% — 2 of 6 top-level roadmap stages complete | An evidence-first, minimalist ESP32-S3 music player with hardware-validated local playback, USB data transfer, interface work and mini-games; Bluetooth audio remains in development. |
+| X-Link | In development · Private repository | 21% — 3 of 14 roadmap milestones complete | An ESP32-based original Xbox network bridge using lwIP NAPT, with dashboard-managed networking, HTTP and FTP proxy functionality, Insignia compatibility work, diagnostics and recovery tooling. |
+<!-- PROJECTS:END -->
 
 ### PacketPunch
 
@@ -342,4 +358,6 @@ narrative.
 Technical details are available in the
 [sync engine](docs/SYNC_ENGINE.md), [authentication](docs/AUTHENTICATION.md),
 [privacy](docs/PRIVACY.md), [data schema](docs/DATA_SCHEMA.md), and
-[roadmap](docs/ROADMAP.md) documentation.
+[roadmap](docs/ROADMAP.md) documentation. Selected-project percentages use the
+conservative calculation documented in
+[project progress](docs/PROJECT_PROGRESS.md).

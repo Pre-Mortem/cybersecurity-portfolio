@@ -480,6 +480,20 @@ def merge_rooms(
     return saved_data, added
 
 
+def updated_profile_after_room_sync(profile: dict, synced_at: str) -> dict:
+    """Update TryHackMe fields without discarding manual public CV records."""
+    updated = dict(profile)
+    updated.update(
+        {
+            "username": "PreMortem",
+            "profile_url": PROFILE_URL,
+            "last_sync": synced_at,
+            "sync_method": "authenticated-completed-rooms-api",
+        }
+    )
+    return updated
+
+
 def sync_rooms() -> int:
     try:
         from playwright.sync_api import sync_playwright
@@ -570,14 +584,7 @@ def sync_rooms() -> int:
 
     synced_at = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()
     profile = read_json(PROFILE, {})
-    profile.update(
-        {
-            "username": "PreMortem",
-            "profile_url": PROFILE_URL,
-            "last_sync": synced_at,
-            "sync_method": "authenticated-completed-rooms-api",
-        }
-    )
+    profile = updated_profile_after_room_sync(profile, synced_at)
     write_json(PROFILE, profile)
     regenerate_readme()
 

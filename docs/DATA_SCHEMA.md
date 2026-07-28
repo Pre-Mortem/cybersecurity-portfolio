@@ -52,18 +52,51 @@ Stores earned TryHackMe achievement badges.
 
 ---
 
-## 3. `data/profile.json` (TryHackMe Profile State)
+## 3. `data/profile.json` (Public Profile Schema v1)
 
-Stores top-level profile metadata for TryHackMe.
+Stores safe public CV records alongside top-level TryHackMe profile state.
 
 ```json
 {
+  "schema_version": 1,
   "username": "PreMortem",
   "profile_url": "https://tryhackme.com/p/PreMortem",
   "last_sync": "2026-07-23T11:44:00+00:00",
-  "sync_method": "authenticated-completed-rooms-api"
+  "sync_method": "authenticated-completed-rooms-api",
+  "qualifications": [
+    {
+      "title": "Example Qualification",
+      "awarding_body_or_provider": "Example Awarding Body",
+      "level": "2",
+      "status": "completed",
+      "awarded": "2025-08-06",
+      "completion_year": 2025
+    }
+  ],
+  "projects": [
+    {
+      "name": "Example Project",
+      "status": "in_development",
+      "visibility": "private",
+      "summary": "Safe public summary.",
+      "progress_percent": 25,
+      "progress_label": "1 of 4 roadmap milestones complete",
+      "progress_evidence": "Only fully completed top-level milestones count."
+    }
+  ]
 }
 ```
+
+Qualification `status` is `completed` or `in_progress`; `awarded` and
+`completion_year` are optional. Learner, certificate, centre, validation and
+serial numbers, signatures, QR/Data Matrix data and certificate images are not
+schema fields. Unknown fields fail validation.
+
+Project `status` is `active` or `in_development`, and `visibility` is `public`
+or `private`. Only public projects may carry a `public_url`; private repository
+URLs are neither stored nor rendered. Project percentages and their evidence
+are manually maintained, deterministic public metadata. Platform syncs update
+only their profile fields and preserve both arrays.
 
 ---
 

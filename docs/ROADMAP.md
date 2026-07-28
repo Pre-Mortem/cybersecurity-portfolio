@@ -37,6 +37,9 @@ This document outlines completed milestones and future enhancements for the **Pr
   outside the generated evidence marker.
 - [x] Keep changing room and badge totals inside their own bounded snapshot
   marker so regeneration cannot overwrite the surrounding authored profile.
+- [x] Render safe qualification records and selected-project progress from
+  canonical profile data without storing certificate identifiers or private
+  repository links.
 - [x] Keep long-form engine, authentication, privacy, schema, and roadmap
   material in `docs/` rather than making the automation dominate the README.
 - [x] Create `TRAINING.md` for comprehensive, multi-platform activity tables.

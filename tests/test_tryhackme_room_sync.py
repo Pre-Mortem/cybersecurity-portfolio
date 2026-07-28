@@ -368,6 +368,21 @@ class TestRoomMergeAndRendering(unittest.TestCase):
 
 
 class TestSafeFailureBoundary(unittest.TestCase):
+    def test_manual_qualifications_and_projects_survive_room_sync_update(self):
+        profile = {
+            "qualifications": [{"title": "Safe Qualification"}],
+            "projects": [{"name": "Safe Project"}],
+            "last_sync": "2026-07-23T11:44:41+00:00",
+        }
+        updated = room_sync.updated_profile_after_room_sync(
+            profile, "2026-07-29T09:00:00+00:00"
+        )
+        self.assertEqual(updated["qualifications"], profile["qualifications"])
+        self.assertEqual(updated["projects"], profile["projects"])
+        self.assertEqual(
+            updated["last_sync"], "2026-07-29T09:00:00+00:00"
+        )
+
     def test_collection_failure_does_not_write_timestamp_or_render(self):
         class FakeContext:
             pages = [object()]

@@ -50,8 +50,10 @@ jobs:
               json.loads(path.read_text(encoding="utf-8"))
               print(f"valid: {path}")
 
+          import portfolio
           from platforms import cisco_netacad, hackthebox
           validators = {
+              Path("data/profile.json"): portfolio.validate_profile_data,
               Path("data/hackthebox.json"): hackthebox.validate_data,
               Path("data/cisco_netacad.json"): cisco_netacad.validate_data,
           }

@@ -5,6 +5,16 @@ portfolio. It contains detailed, evidence-backed activity generated from saved
 platform data by the [Cybersecurity Portfolio Sync Engine](docs/SYNC_ENGINE.md).
 
 <!-- TRAINING:START -->
+## Qualifications
+
+Two completed NCFE Level 2 qualifications in cyber security principles and coding; currently completing a Level 3 Certificate in Cyber Security Practices with Think Employment.
+
+| Qualification | Awarding body / provider | Level | Status | Awarded |
+|---|---|---:|---|---|
+| NCFE Level 2 Certificate in Understanding Coding | NCFE | 2 | Completed | 6 August 2025 |
+| NCFE Level 2 Certificate in the Principles of Cyber Security | NCFE | 2 | Completed | 29 May 2025 |
+| Certificate in Cyber Security Practices | Think Employment | 3 | In progress | — |
+
 ## TryHackMe
 
 **Profile:** [PreMortem](https://tryhackme.com/p/PreMortem)<br>

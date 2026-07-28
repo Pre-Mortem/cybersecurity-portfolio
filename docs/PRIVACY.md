@@ -35,6 +35,14 @@ tokens, cookies, session identifiers, private-key material, or local user paths.
 The validator runs again before every write and the renderer refuses malformed
 or unsafe Cisco data.
 
+3. **Qualification Certificate Rules**: Public qualification records are
+   restricted to the qualification title, awarding body or provider, level,
+   completion status and award date. Learner numbers, certificate numbers,
+   centre numbers, validation or document serials, signatures, QR/Data Matrix
+   codes and certificate photographs are never stored or published. The
+   `data/profile.json` qualification allow-list has no fields for them, and
+   unknown fields fail profile validation before regeneration.
+
 ---
 
 ## Data Collection Boundaries
@@ -51,6 +59,9 @@ or unsafe Cisco data.
 - **No Solutions or Write-up Leaks**: Answers, passwords, exploits, payload files, or step-by-step solutions for active platforms.
 - **No Credentials or Secrets**: Passwords, API tokens, bearer headers, SSH keys, cookies, or browser storage.
 - **No Cisco Identity Data**: Real names, email addresses, account/user IDs, certificate IDs, public or private account URLs, and certificate verification URLs.
+- **No Private Qualification Identifiers or Images**: Learner, certificate,
+  centre, validation and serial numbers; signatures; QR/Data Matrix codes; and
+  certificate photographs.
 - **No Local Paths or System PII**: User home paths, internal network IPs, or local workstation names.
 
 ---

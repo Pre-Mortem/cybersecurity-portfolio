@@ -1,7 +1,74 @@
 {
+  "schema_version": 1,
   "last_sync": "2026-07-28T15:12:57+00:00",
   "profile_card_path": "assets/tryhackme/public-profile.png",
   "username": "PreMortem",
   "profile_url": "https://tryhackme.com/p/PreMortem",
-  "sync_method": "authenticated-completed-rooms-api"
+  "sync_method": "authenticated-completed-rooms-api",
+  "qualifications": [
+    {
+      "title": "NCFE Level 2 Certificate in Understanding Coding",
+      "awarding_body_or_provider": "NCFE",
+      "level": "2",
+      "status": "completed",
+      "awarded": "2025-08-06",
+      "completion_year": 2025
+    },
+    {
+      "title": "NCFE Level 2 Certificate in the Principles of Cyber Security",
+      "awarding_body_or_provider": "NCFE",
+      "level": "2",
+      "status": "completed",
+      "awarded": "2025-05-29",
+      "completion_year": 2025
+    },
+    {
+      "title": "Certificate in Cyber Security Practices",
+      "awarding_body_or_provider": "Think Employment",
+      "level": "3",
+      "status": "in_progress"
+    }
+  ],
+  "projects": [
+    {
+      "name": "PacketPunch",
+      "status": "in_development",
+      "visibility": "private",
+      "summary": "A modern security hardware and software platform focused on current wireless, network and embedded technologies.",
+      "progress_label": "Not quantified"
+    },
+    {
+      "name": "ESP32-S2 AI HID Typer",
+      "status": "in_development",
+      "visibility": "private",
+      "summary": "An ESP32-S2 wireless HID keyboard system with an Android companion, dynamic discovery, emergency-stop controls and defensive input validation.",
+      "progress_label": "Not quantified"
+    },
+    {
+      "name": "Cybersecurity Portfolio Automation",
+      "status": "active",
+      "visibility": "public",
+      "public_url": "https://github.com/Pre-Mortem/cybersecurity-portfolio",
+      "summary": "Privacy-conscious Python automation for collecting, validating and rendering public cybersecurity training evidence.",
+      "progress_label": "Active maintenance"
+    },
+    {
+      "name": "HackPod",
+      "status": "in_development",
+      "visibility": "private",
+      "summary": "An evidence-first, minimalist ESP32-S3 music player with hardware-validated local playback, USB data transfer, interface work and mini-games; Bluetooth audio remains in development.",
+      "progress_percent": 33,
+      "progress_label": "2 of 6 top-level roadmap stages complete",
+      "progress_evidence": "Milestones 0 and 3 are complete. Milestone 1 remains caveated, Milestone 2 and product polish are partial, and Bluetooth transport remains in progress."
+    },
+    {
+      "name": "X-Link",
+      "status": "in_development",
+      "visibility": "private",
+      "summary": "An ESP32-based original Xbox network bridge using lwIP NAPT, with dashboard-managed networking, HTTP and FTP proxy functionality, Insignia compatibility work, diagnostics and recovery tooling.",
+      "progress_percent": 21,
+      "progress_label": "3 of 14 roadmap milestones complete",
+      "progress_evidence": "Milestones 0, 1 and 2 are complete. Partial, substantially complete and validation-pending milestones are deliberately excluded from the completed count."
+    }
+  ]
 }

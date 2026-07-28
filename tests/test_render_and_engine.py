@@ -103,6 +103,151 @@ class TestCiscoRenderer(unittest.TestCase):
         self.assertIn("| — | — |", detail)
 
 
+class TestPublicProfileRenderer(unittest.TestCase):
+    def setUp(self):
+        self.profile = portfolio.read_json(portfolio.PROFILE, {})
+
+    def test_all_qualifications_render_as_a_safe_markdown_table(self):
+        rendered = portfolio.build_qualifications_table(self.profile)
+        self.assertIn(
+            "| Qualification | Awarding body / provider | Level | Status | Awarded |",
+            rendered,
+        )
+        self.assertEqual(
+            len(
+                [
+                    line
+                    for line in rendered.splitlines()
+                    if line.startswith("| ") and not line.startswith("|---")
+                ]
+            ),
+            4,
+        )
+        self.assertIn(
+            "NCFE Level 2 Certificate in Understanding Coding", rendered
+        )
+        self.assertIn(
+            "NCFE Level 2 Certificate in the Principles of Cyber Security",
+            rendered,
+        )
+        self.assertIn("6 August 2025", rendered)
+        self.assertIn("29 May 2025", rendered)
+        self.assertEqual(rendered.count("| Completed |"), 2)
+        self.assertIn(
+            "| Certificate in Cyber Security Practices | Think Employment "
+            "| 3 | In progress | — |",
+            rendered,
+        )
+
+    def test_missing_award_date_renders_as_em_dash(self):
+        profile = {
+            "qualifications": [
+                {
+                    "title": "Fixture Qualification",
+                    "awarding_body_or_provider": "Fixture Provider",
+                    "level": "2",
+                    "status": "completed",
+                }
+            ]
+        }
+        self.assertIn(
+            "| Fixture Qualification | Fixture Provider | 2 | Completed | — |",
+            portfolio.build_qualifications_table(profile),
+        )
+
+    def test_identifier_fields_are_rejected_and_never_rendered(self):
+        private_values = (
+            "PRIVATE-LEARNER-ID",
+            "PRIVATE-CERTIFICATE-ID",
+            "PRIVATE-CENTRE-ID",
+        )
+        profile = {
+            "qualifications": [
+                {
+                    "title": "Safe Qualification",
+                    "awarding_body_or_provider": "Safe Provider",
+                    "level": "2",
+                    "status": "completed",
+                    "awarded": "2025-01-01",
+                    "learner_number": private_values[0],
+                    "certificate_number": private_values[1],
+                    "centre_number": private_values[2],
+                    "certificate_image": "private-certificate.jpg",
+                }
+            ]
+        }
+        errors = portfolio.validate_profile_data(profile)
+        self.assertTrue(any("unknown fields" in error for error in errors))
+        rendered = portfolio.build_qualifications_table(profile)
+        for value in private_values:
+            self.assertNotIn(value, rendered)
+        self.assertNotIn("private-certificate.jpg", rendered)
+
+    def test_selected_projects_include_existing_and_new_rows(self):
+        rendered = portfolio.build_selected_projects_table(self.profile)
+        for project in (
+            "PacketPunch",
+            "ESP32-S2 AI HID Typer",
+            "Cybersecurity Portfolio Automation",
+            "HackPod",
+            "X-Link",
+        ):
+            self.assertIn(project, rendered)
+        self.assertIn("33% — 2 of 6 top-level roadmap stages complete", rendered)
+        self.assertIn("21% — 3 of 14 roadmap milestones complete", rendered)
+        self.assertIn("lwIP NAPT", rendered)
+        self.assertIn("Insignia compatibility work", rendered)
+
+    def test_private_project_urls_are_not_rendered(self):
+        profile = {
+            "projects": [
+                {
+                    "name": "Private Fixture",
+                    "status": "in_development",
+                    "visibility": "private",
+                    "public_url": "https://example.invalid/private-repository",
+                    "summary": "Safe summary",
+                    "progress_label": "Not quantified",
+                }
+            ]
+        }
+        rendered = portfolio.build_selected_projects_table(profile)
+        self.assertIn("Private Fixture", rendered)
+        self.assertNotIn("example.invalid", rendered)
+        self.assertTrue(portfolio.validate_profile_data(profile))
+
+    def test_profile_schema_and_repeated_render_are_stable(self):
+        self.assertEqual(portfolio.validate_profile_data(self.profile), [])
+        first = portfolio.build_qualifications_table(self.profile)
+        second = portfolio.build_qualifications_table(self.profile)
+        projects_first = portfolio.build_selected_projects_table(self.profile)
+        projects_second = portfolio.build_selected_projects_table(self.profile)
+        self.assertEqual(first, second)
+        self.assertEqual(projects_first, projects_second)
+        self.assertFalse(
+            {
+                "learner_number",
+                "certificate_number",
+                "centre_number",
+                "certificate_image",
+            }
+            & portfolio.QUALIFICATION_FIELDS
+        )
+
+    def test_no_certificate_image_is_present_in_the_repository(self):
+        image_suffixes = {".heic", ".jpeg", ".jpg", ".png", ".tiff", ".webp"}
+        certificate_images = [
+            path
+            for path in portfolio.ROOT.rglob("*")
+            if path.is_file()
+            and ".git" not in path.parts
+            and ".venv" not in path.parts
+            and path.suffix.lower() in image_suffixes
+            and "certificate" in path.name.lower()
+        ]
+        self.assertEqual(certificate_images, [])
+
+
 class TestIdempotentRender(unittest.TestCase):
     def test_render_twice_identical(self):
         profile = portfolio.read_json(portfolio.PROFILE, {})
@@ -127,7 +272,10 @@ class TestIdempotentRender(unittest.TestCase):
         htb_data = portfolio.read_optional_json(portfolio.HACKTHEBOX, {})
         cisco_data = cisco.empty_schema()
         readme_section = portfolio.render(profile, rooms, badges, htb_data, cisco_data)
-        snapshot_section = portfolio.render_profile_snapshot(rooms, badges)
+        snapshot_section = portfolio.render_profile_snapshot(
+            rooms, badges, profile
+        )
+        project_section = portfolio.build_selected_projects_table(profile)
         training_section = portfolio.render_training(profile, rooms, badges, htb_data, cisco_data)
 
         with tempfile.TemporaryDirectory() as directory:
@@ -142,6 +290,8 @@ class TestIdempotentRender(unittest.TestCase):
                 "## About Me\n\nPractical work and safe design.\n\n"
                 "## What I Bring\n\nEvidence-backed capabilities.\n\n"
                 "## Selected Security Projects\n\n"
+                f"{portfolio.PROJECTS_START}\nold project table\n"
+                f"{portfolio.PROJECTS_END}\n\n"
                 "### PacketPunch\n\nPersonal project narrative.\n\n"
                 "### ESP32-S2 AI HID Typer\n\nPersonal project narrative.\n\n"
                 "### Cybersecurity Portfolio Automation\n\nPersonal project narrative.\n\n"
@@ -158,11 +308,15 @@ class TestIdempotentRender(unittest.TestCase):
             )
             with mock.patch.object(portfolio, "README", readme), \
                  mock.patch.object(portfolio, "TRAINING_MD", training):
-                portfolio.update_readme(readme_section, snapshot_section)
+                portfolio.update_readme(
+                    readme_section, snapshot_section, project_section
+                )
                 portfolio.update_training_md(training_section)
                 first = (readme.read_text(encoding="utf-8"),
                          training.read_text(encoding="utf-8"))
-                portfolio.update_readme(readme_section, snapshot_section)
+                portfolio.update_readme(
+                    readme_section, snapshot_section, project_section
+                )
                 portfolio.update_training_md(training_section)
                 second = (readme.read_text(encoding="utf-8"),
                           training.read_text(encoding="utf-8"))
@@ -177,6 +331,9 @@ class TestIdempotentRender(unittest.TestCase):
                 "### PacketPunch",
                 "### ESP32-S2 AI HID Typer",
                 "### Cybersecurity Portfolio Automation",
+                portfolio.PROJECTS_START,
+                "HackPod",
+                "X-Link",
                 "## Current Focus",
                 "## Contact and Profiles",
             ):
@@ -195,6 +352,9 @@ class TestIdempotentRender(unittest.TestCase):
                 f"- **TryHackMe evidence:** {len(rooms['rooms'])} completed rooms "
                 f"and {len(badges['badges'])} earned badges",
                 first[0],
+            )
+            self.assertIn(
+                "Two completed NCFE Level 2 qualifications", first[0]
             )
             self.assertTrue(first[1].startswith("Training-authored introduction."))
             self.assertTrue(first[1].endswith("Training-authored closing.\n"))
@@ -434,6 +594,8 @@ class TestIdempotentRender(unittest.TestCase):
         self.assertEqual(readme.count(portfolio.GEN_END), 1)
         self.assertEqual(readme.count(portfolio.SNAPSHOT_START), 1)
         self.assertEqual(readme.count(portfolio.SNAPSHOT_END), 1)
+        self.assertEqual(readme.count(portfolio.PROJECTS_START), 1)
+        self.assertEqual(readme.count(portfolio.PROJECTS_END), 1)
         self.assertLess(
             readme.index(portfolio.SNAPSHOT_START),
             readme.index("## About Me"),
@@ -456,7 +618,15 @@ class TestIdempotentRender(unittest.TestCase):
             "## Other Platforms in Progress",
         ):
             self.assertIn(evidence_section, readme)
-        self.assertIn("603/5762/9", readme)
+        self.assertIn("NCFE Level 2 Certificate in Understanding Coding", readme)
+        self.assertIn(
+            "NCFE Level 2 Certificate in the Principles of Cyber Security",
+            readme,
+        )
+        self.assertIn("HackPod", readme)
+        self.assertIn("X-Link", readme)
+        self.assertIn("27 completed rooms and 6 earned badges", readme)
+        self.assertIn("Malware Classification", readme)
         rooms = portfolio.read_json(portfolio.ROOMS, {"rooms": []})
         badges = portfolio.read_json(portfolio.BADGES, {"badges": []})
         self.assertIn(
@@ -482,6 +652,10 @@ class TestIdempotentRender(unittest.TestCase):
         rendered = portfolio.render_training(
             profile, rooms, badges, _sample_htb(), cisco_data
         )
+        self.assertIn("## Qualifications", rendered)
+        self.assertIn("6 August 2025", rendered)
+        self.assertIn("29 May 2025", rendered)
+        self.assertIn("Certificate in Cyber Security Practices", rendered)
         self.assertIn("### Completed Rooms", rendered)
         self.assertIn("Linux Fundamentals Part 1", rendered)
         self.assertIn("### Achievement Cabinet", rendered)

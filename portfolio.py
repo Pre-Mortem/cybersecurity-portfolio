@@ -31,6 +31,8 @@ GEN_START = "<!-- PORTFOLIO:START -->"
 GEN_END = "<!-- PORTFOLIO:END -->"
 SNAPSHOT_START = "<!-- PROFILE-SNAPSHOT:START -->"
 SNAPSHOT_END = "<!-- PROFILE-SNAPSHOT:END -->"
+PROJECTS_START = "<!-- PROJECTS:START -->"
+PROJECTS_END = "<!-- PROJECTS:END -->"
 TRAINING_START = "<!-- TRAINING:START -->"
 TRAINING_END = "<!-- TRAINING:END -->"
 PROFILE_URL = "https://tryhackme.com/p/PreMortem"
@@ -293,6 +295,262 @@ def tryhackme_badge_image_url(value) -> str | None:
 def md_cell(value) -> str:
     """Escape a value for safe use inside a Markdown table cell."""
     return html.escape(str(value)).replace("|", "\\|").replace("\n", " ")
+
+
+# --- Public profile, qualifications and selected projects -----------------
+
+PROFILE_ROOT_FIELDS = {
+    "schema_version",
+    "last_sync",
+    "profile_card_path",
+    "username",
+    "profile_url",
+    "sync_method",
+    "qualifications",
+    "projects",
+}
+QUALIFICATION_FIELDS = {
+    "title",
+    "awarding_body_or_provider",
+    "level",
+    "status",
+    "awarded",
+    "completion_year",
+}
+PROJECT_FIELDS = {
+    "name",
+    "status",
+    "visibility",
+    "public_url",
+    "summary",
+    "progress_percent",
+    "progress_label",
+    "progress_evidence",
+}
+
+
+def validate_profile_data(profile: dict) -> list[str]:
+    """Validate the public profile allow-list without accepting identifiers."""
+    errors = []
+    if not isinstance(profile, dict):
+        return ["profile must be an object"]
+    unknown_root = set(profile) - PROFILE_ROOT_FIELDS
+    if unknown_root:
+        errors.append(
+            "unknown profile fields: " + ", ".join(sorted(unknown_root))
+        )
+
+    qualifications = profile.get("qualifications", [])
+    if not isinstance(qualifications, list):
+        errors.append("qualifications must be a list")
+    else:
+        for index, item in enumerate(qualifications):
+            prefix = f"qualifications[{index}]"
+            if not isinstance(item, dict):
+                errors.append(f"{prefix} must be an object")
+                continue
+            unknown = set(item) - QUALIFICATION_FIELDS
+            if unknown:
+                errors.append(
+                    f"{prefix} has unknown fields: "
+                    + ", ".join(sorted(unknown))
+                )
+            for field in (
+                "title",
+                "awarding_body_or_provider",
+                "level",
+                "status",
+            ):
+                if not safe_public_text(item.get(field)):
+                    errors.append(f"{prefix}.{field} is required")
+            if item.get("status") not in {"completed", "in_progress"}:
+                errors.append(f"{prefix}.status is invalid")
+            awarded = item.get("awarded")
+            if awarded is not None:
+                try:
+                    dt.date.fromisoformat(str(awarded))
+                except (TypeError, ValueError):
+                    errors.append(f"{prefix}.awarded must be an ISO date")
+            completion_year = item.get("completion_year")
+            if completion_year is not None and (
+                not isinstance(completion_year, int)
+                or completion_year < 1900
+                or completion_year > 9999
+            ):
+                errors.append(f"{prefix}.completion_year is invalid")
+
+    projects = profile.get("projects", [])
+    if not isinstance(projects, list):
+        errors.append("projects must be a list")
+    else:
+        for index, item in enumerate(projects):
+            prefix = f"projects[{index}]"
+            if not isinstance(item, dict):
+                errors.append(f"{prefix} must be an object")
+                continue
+            unknown = set(item) - PROJECT_FIELDS
+            if unknown:
+                errors.append(
+                    f"{prefix} has unknown fields: "
+                    + ", ".join(sorted(unknown))
+                )
+            for field in ("name", "status", "visibility", "summary"):
+                if not safe_public_text(item.get(field)):
+                    errors.append(f"{prefix}.{field} is required")
+            if item.get("status") not in {"active", "in_development"}:
+                errors.append(f"{prefix}.status is invalid")
+            if item.get("visibility") not in {"public", "private"}:
+                errors.append(f"{prefix}.visibility is invalid")
+            public_url = item.get("public_url")
+            if public_url is not None and (
+                item.get("visibility") != "public" or not safe_url(public_url)
+            ):
+                errors.append(
+                    f"{prefix}.public_url requires a safe public project"
+                )
+            progress = item.get("progress_percent")
+            if progress is not None and (
+                not isinstance(progress, int) or not 0 <= progress <= 100
+            ):
+                errors.append(f"{prefix}.progress_percent is invalid")
+    return errors
+
+
+def format_public_date(value) -> str:
+    try:
+        parsed = dt.date.fromisoformat(str(value))
+    except (TypeError, ValueError):
+        return "—"
+    return f"{parsed.day} {parsed:%B %Y}"
+
+
+def build_qualifications_table(profile: dict) -> str:
+    rows = []
+    for item in profile.get("qualifications", []):
+        if not isinstance(item, dict):
+            continue
+        title = md_cell(safe_public_text(item.get("title"), "Qualification"))
+        provider = md_cell(
+            safe_public_text(
+                item.get("awarding_body_or_provider"), "—"
+            )
+        )
+        level = md_cell(safe_public_text(item.get("level"), "—"))
+        status = {
+            "completed": "Completed",
+            "in_progress": "In progress",
+        }.get(item.get("status"), "—")
+        awarded = (
+            format_public_date(item.get("awarded"))
+            if item.get("status") == "completed"
+            else "—"
+        )
+        rows.append(
+            f"| {title} | {provider} | {level} | {status} | {awarded} |"
+        )
+    if not rows:
+        rows.append("| No qualifications recorded | — | — | — | — |")
+    return (
+        "| Qualification | Awarding body / provider | Level | Status | Awarded |\n"
+        "|---|---|---:|---|---|\n"
+        + "\n".join(rows)
+    )
+
+
+def build_qualification_summary(profile: dict) -> str:
+    qualifications = [
+        item
+        for item in profile.get("qualifications", [])
+        if isinstance(item, dict)
+    ]
+    completed_ncfe_level_two = [
+        item
+        for item in qualifications
+        if item.get("status") == "completed"
+        and item.get("awarding_body_or_provider") == "NCFE"
+        and str(item.get("level")) == "2"
+    ]
+    current_level_three = next(
+        (
+            item
+            for item in qualifications
+            if item.get("status") == "in_progress"
+            and str(item.get("level")) == "3"
+        ),
+        None,
+    )
+    if len(completed_ncfe_level_two) == 2 and current_level_three:
+        provider = safe_public_text(
+            current_level_three.get("awarding_body_or_provider"),
+            "the current provider",
+        )
+        return (
+            "Two completed NCFE Level 2 qualifications in cyber security "
+            "principles and coding; currently completing a Level 3 Certificate "
+            f"in Cyber Security Practices with {provider}."
+        )
+    completed = sum(
+        item.get("status") == "completed" for item in qualifications
+    )
+    in_progress = sum(
+        item.get("status") == "in_progress" for item in qualifications
+    )
+    return (
+        f"{completed} completed qualification(s); "
+        f"{in_progress} currently in progress."
+    )
+
+
+def build_qualifications_section(profile: dict) -> str:
+    return (
+        "## Qualifications\n\n"
+        f"{build_qualification_summary(profile)}\n\n"
+        f"{build_qualifications_table(profile)}"
+    )
+
+
+def build_selected_projects_table(profile: dict) -> str:
+    rows = []
+    for item in profile.get("projects", []):
+        if not isinstance(item, dict):
+            continue
+        name = md_cell(safe_public_text(item.get("name"), "Project"))
+        visibility = item.get("visibility")
+        public_url = safe_url(item.get("public_url"))
+        if visibility == "public" and public_url:
+            name = f"[{name}]({public_url})"
+        status = {
+            "active": "Active",
+            "in_development": "In development",
+        }.get(item.get("status"), "—")
+        visibility_label = {
+            "public": "Public repository",
+            "private": "Private repository",
+        }.get(visibility, "Repository status unavailable")
+        progress = item.get("progress_percent")
+        progress_label = safe_public_text(
+            item.get("progress_label"), "Not quantified"
+        )
+        if isinstance(progress, int) and 0 <= progress <= 100:
+            progress_text = f"{progress}% — {progress_label}"
+        else:
+            progress_text = progress_label
+        summary = safe_public_text(
+            item.get("summary"), "Public project summary unavailable."
+        )
+        rows.append(
+            f"| {name} | {status} · {visibility_label} "
+            f"| {md_cell(progress_text)} | {md_cell(summary)} |"
+        )
+    if not rows:
+        rows.append("| No projects recorded | — | — | — |")
+    return (
+        f"{PROJECTS_START}\n"
+        "| Project | Status | Progress | Summary |\n"
+        "|---|---|---|---|\n"
+        + "\n".join(rows)
+        + f"\n{PROJECTS_END}"
+    )
 
 
 # --- Skills matrix (evidence-backed) ---------------------------------------
@@ -935,12 +1193,23 @@ def build_room_milestones_section(rooms: dict) -> str:
     )
 
 
-def render_profile_snapshot(rooms: dict, badges: dict) -> str:
-    """Render only the changing figures inside the authored profile snapshot."""
+def render_profile_snapshot(
+    rooms: dict,
+    badges: dict,
+    profile: dict | None = None,
+) -> str:
+    """Render changing public CV figures inside the authored profile snapshot."""
     room_count = len(rooms.get("rooms") or [])
     badge_count = len(badges.get("badges") or [])
+    qualification_content = ""
+    if profile and profile.get("qualifications"):
+        qualification_content = (
+            f"- **Qualifications:** {build_qualification_summary(profile)}\n\n"
+            f"{build_qualifications_table(profile)}\n\n"
+        )
     return (
         f"{SNAPSHOT_START}\n"
+        f"{qualification_content}"
         f"- **TryHackMe evidence:** {room_count} completed rooms and "
         f"{badge_count} earned badges\n"
         f"{SNAPSHOT_END}"
@@ -1024,6 +1293,7 @@ def render_training(
         htb_data = read_optional_json(HACKTHEBOX, {})
 
     sections = [
+        build_qualifications_section(profile),
         build_tryhackme_detailed(profile, rooms, badges),
         build_hackthebox_section(htb_data),
         build_cisco_detailed(cisco_data),
@@ -1031,7 +1301,11 @@ def render_training(
     return TRAINING_START + "\n" + "\n\n".join(sections) + "\n" + TRAINING_END
 
 
-def update_readme(section: str, snapshot: str | None = None) -> None:
+def update_readme(
+    section: str,
+    snapshot: str | None = None,
+    projects: str | None = None,
+) -> None:
     text = README.read_text(encoding="utf-8")
     pattern = re.compile(re.escape(GEN_START) + r".*?" + re.escape(GEN_END), re.DOTALL)
     if not pattern.search(text):
@@ -1046,6 +1320,15 @@ def update_readme(section: str, snapshot: str | None = None) -> None:
         if not snapshot_pattern.search(text):
             raise SystemExit("README is missing profile snapshot markers")
         text = snapshot_pattern.sub(lambda _match: snapshot, text)
+
+    if projects is not None:
+        projects_pattern = re.compile(
+            re.escape(PROJECTS_START) + r".*?" + re.escape(PROJECTS_END),
+            re.DOTALL,
+        )
+        if not projects_pattern.search(text):
+            raise SystemExit("README is missing selected-project markers")
+        text = projects_pattern.sub(lambda _match: projects, text)
 
     README.write_text(text, encoding="utf-8")
 
@@ -1172,13 +1455,20 @@ class PlatformOutcome:
 def regenerate_readme() -> None:
     """Regenerate README.md and TRAINING.md from saved, validated local data only."""
     profile = read_json(PROFILE, {})
+    profile_errors = validate_profile_data(profile)
+    if profile_errors:
+        raise SystemExit(
+            "data/profile.json failed public schema validation: "
+            + "; ".join(profile_errors)
+        )
     rooms = read_json(ROOMS, {"rooms": []})
     badges = read_json(BADGES, {"badges": []})
     htb_data = read_optional_json(HACKTHEBOX, {})
     cisco_data = read_optional_json(CISCO_NETACAD, None)
     update_readme(
         render(profile, rooms, badges, htb_data, cisco_data),
-        render_profile_snapshot(rooms, badges),
+        render_profile_snapshot(rooms, badges, profile),
+        build_selected_projects_table(profile),
     )
     update_training_md(render_training(profile, rooms, badges, htb_data, cisco_data))
 
