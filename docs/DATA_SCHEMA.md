@@ -18,12 +18,18 @@ Stores completed TryHackMe rooms and difficulty metadata.
       "difficulty": "Easy",
       "category": "",
       "completed": "2026-07-23",
+      "completion_date_source": "tryhackme",
       "writeup": "writeups/tryhackme/linuxfundamentalspart1.md",
-      "source": "authenticated-browser-sync"
+      "source": "authenticated-completed-rooms-api"
     }
   ]
 }
 ```
+
+`completion_date_source` is `tryhackme` when the completed-room record exposes
+an absolute timestamp, `tryhackme-relative` when an unambiguous relative date
+was converted, or `sync-date-fallback` when TryHackMe exposes no completion
+timestamp. Older records may omit this provenance field.
 
 ---
 
@@ -54,7 +60,7 @@ Stores top-level profile metadata for TryHackMe.
   "username": "PreMortem",
   "profile_url": "https://tryhackme.com/p/PreMortem",
   "last_sync": "2026-07-23T11:44:00+00:00",
-  "sync_method": "isolated-authenticated-browser"
+  "sync_method": "authenticated-completed-rooms-api"
 }
 ```
 

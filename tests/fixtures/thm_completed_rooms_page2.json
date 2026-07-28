@@ -1,0 +1,22 @@
+{
+  "status": "success",
+  "data": {
+    "docs": [
+      {
+        "type": "walkthrough",
+        "difficulty": "easy",
+        "code": "malwareclassification",
+        "title": "Malware Classification",
+        "completedAt": "2026-07-28T14:30:00.000Z"
+      }
+    ],
+    "totalDocs": 17,
+    "limit": 16,
+    "page": 2,
+    "totalPages": 2,
+    "nextPage": null,
+    "prevPage": 1,
+    "hasPrevPage": true,
+    "hasNextPage": false
+  }
+}

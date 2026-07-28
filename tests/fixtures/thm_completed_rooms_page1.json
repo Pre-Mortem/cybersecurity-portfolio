@@ -1,0 +1,127 @@
+{
+  "status": "success",
+  "data": {
+    "docs": [
+      {
+        "type": "walkthrough",
+        "difficulty": "info",
+        "code": "linuxfundamentalspart1",
+        "title": "Linux Fundamentals Part 1",
+        "completedAt": "2026-07-23T10:00:00.000Z"
+      },
+      {
+        "type": "walkthrough",
+        "difficulty": "easy",
+        "code": "dnsindetail",
+        "title": "DNS in Detail",
+        "completedAt": "2026-07-23T10:05:00.000Z"
+      },
+      {
+        "type": "walkthrough",
+        "difficulty": "info",
+        "code": "whatisnetworking",
+        "title": "What is Networking?",
+        "completedAt": "2026-07-23T10:10:00.000Z"
+      },
+      {
+        "type": "walkthrough",
+        "difficulty": "info",
+        "code": "introtolan",
+        "title": "Intro to LAN",
+        "completedAt": "2026-07-23T10:15:00.000Z"
+      },
+      {
+        "type": "walkthrough",
+        "difficulty": "easy",
+        "code": "walkinganapplication",
+        "title": "Walking An Application",
+        "completedAt": "2026-07-23T10:20:00.000Z"
+      },
+      {
+        "type": "walkthrough",
+        "difficulty": "easy",
+        "code": "pentestingfundamentals",
+        "title": "Pentesting Fundamentals",
+        "completedAt": "2026-07-23T10:25:00.000Z"
+      },
+      {
+        "type": "walkthrough",
+        "difficulty": "info",
+        "code": "principlesofsecurity",
+        "title": "Principles of Security",
+        "completedAt": "2026-07-23T10:30:00.000Z"
+      },
+      {
+        "type": "walkthrough",
+        "difficulty": "easy",
+        "code": "metasploitexploitation",
+        "title": "Metasploit: Exploitation",
+        "completedAt": "2026-07-23T10:35:00.000Z"
+      },
+      {
+        "type": "walkthrough",
+        "difficulty": "easy",
+        "code": "contentdiscovery",
+        "title": "Content Discovery",
+        "completedAt": "2026-07-23T10:40:00.000Z"
+      },
+      {
+        "type": "walkthrough",
+        "difficulty": "easy",
+        "code": "subdomainenumeration",
+        "title": "Subdomain Enumeration",
+        "completedAt": "2026-07-23T10:45:00.000Z"
+      },
+      {
+        "type": "walkthrough",
+        "difficulty": "easy",
+        "code": "authenticationbypass",
+        "title": "Authentication Bypass",
+        "completedAt": "2026-07-23T10:50:00.000Z"
+      },
+      {
+        "type": "walkthrough",
+        "difficulty": "easy",
+        "code": "metasploitintro",
+        "title": "Metasploit: Introduction",
+        "completedAt": "2026-07-23T10:55:00.000Z"
+      },
+      {
+        "type": "walkthrough",
+        "difficulty": "easy",
+        "code": "idor",
+        "title": "IDOR",
+        "completedAt": "2026-07-23T11:00:00.000Z"
+      },
+      {
+        "type": "walkthrough",
+        "difficulty": "easy",
+        "code": "meterpreter",
+        "title": "Metasploit: Meterpreter",
+        "completedAt": "2026-07-23T11:05:00.000Z"
+      },
+      {
+        "type": "walkthrough",
+        "difficulty": "easy",
+        "code": "offensivesecurityintro",
+        "title": "Offensive Security Intro",
+        "completedAt": "2026-07-23T11:10:00.000Z"
+      },
+      {
+        "type": "walkthrough",
+        "difficulty": "info",
+        "code": "careersincyber",
+        "title": "Careers in Cyber",
+        "completedAt": "2026-07-23T11:15:00.000Z"
+      }
+    ],
+    "totalDocs": 17,
+    "limit": 16,
+    "page": 1,
+    "totalPages": 2,
+    "nextPage": 2,
+    "prevPage": null,
+    "hasPrevPage": false,
+    "hasNextPage": true
+  }
+}

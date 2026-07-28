@@ -327,10 +327,11 @@ class TestRunSyncOutcomes(unittest.TestCase):
     def test_complete_failure_returns_one(self):
         bad = portfolio.PlatformOutcome("Hack The Box", False, "fail")
         with mock.patch.object(portfolio, "sync_hackthebox_platform", return_value=bad), \
-             mock.patch.object(portfolio, "regenerate_readme"), \
+             mock.patch.object(portfolio, "regenerate_readme") as regenerate, \
              mock.patch.object(portfolio, "run_git", return_value=SimpleNamespace(stdout="")):
             rc = portfolio.run_sync(["hackthebox"], interactive=False, auto_push=False)
         self.assertEqual(rc, 1)
+        regenerate.assert_not_called()
 
     def test_partial_cisco_failure_is_isolated(self):
         ok = portfolio.PlatformOutcome("TryHackMe", True, "ok", {"rooms": 16})

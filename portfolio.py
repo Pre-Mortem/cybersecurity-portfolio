@@ -9,7 +9,7 @@ import json
 import re
 import subprocess
 from pathlib import Path
-from urllib.parse import quote, urljoin, urlparse
+from urllib.parse import quote, urlparse
 
 ROOT = Path(__file__).resolve().parent
 CONFIG = ROOT / "config.example.json"
@@ -243,6 +243,37 @@ def safe_url(url) -> str | None:
     if text.lower().startswith(("http://", "https://")):
         return text
     return None
+
+
+PRIVATE_TEXT_PATTERN = re.compile(
+    r"(?i)(?:"
+    r"/users/[^/\s]+|"
+    r"/home/[^/\s]+|"
+    r"[a-z]:\\users\\[^\\\s]+|"
+    r"[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9.-]+\.[a-z]{2,}"
+    r")"
+)
+
+
+def safe_public_text(value, fallback: str = "") -> str:
+    """Return display text only when it does not resemble private identity data."""
+    text = str(value or "").strip()
+    if not text or PRIVATE_TEXT_PATTERN.search(text):
+        return fallback
+    return text
+
+
+def tryhackme_room_url(value) -> str | None:
+    """Accept only canonical public TryHackMe room links."""
+    url = safe_url(value)
+    if not url:
+        return None
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or parsed.netloc.lower() != "tryhackme.com":
+        return None
+    if not parsed.path.startswith("/room/") or parsed.query or parsed.fragment:
+        return None
+    return url
 
 
 def md_cell(value) -> str:
@@ -656,14 +687,39 @@ def build_hackthebox_section(data: dict | None = None) -> str:
     return "\n\n".join(parts)
 
 
+def build_recent_rooms_table(
+    rooms: dict,
+    limit: int = 10,
+    heading: str = "### Recent Completed Rooms",
+) -> str:
+    room_list = rooms.get("rooms", [])
+    ordered = sorted(room_list, key=lambda item: item.get("completed", ""), reverse=True)
+    recent_rows = []
+    for room in ordered[:limit]:
+        name = md_cell(safe_public_text(room.get("name"), "Sanitised room"))
+        url = tryhackme_room_url(room.get("url"))
+        if url:
+            name = f"[{name}]({url})"
+        recent_rows.append(
+            f"| {name} | {md_cell(safe_public_text(room.get('difficulty'), '—'))} "
+            f"| {md_cell(safe_public_text(room.get('completed'), '—'))} |"
+        )
+    if recent_rows:
+        return (
+            f"{heading}\n\n"
+            "| Room | Difficulty | Completed |\n"
+            "|---|---|---|\n"
+            + "\n".join(recent_rows)
+        )
+    return f"{heading}\n\nNo completed rooms recorded yet."
+
+
 def build_tryhackme_summary(profile: dict, rooms: dict, badges: dict) -> str:
     last_sync = format_sync_timestamp(profile.get("last_sync"))
     progress_summary = build_progress_summary(rooms, badges)
-
-    room_list = rooms.get("rooms", [])
-    ordered = sorted(room_list, key=lambda item: item.get("completed", ""), reverse=True)
-    recent_names = [room.get("name", "") for room in ordered[:5] if room.get("name")]
-    recent_str = ", ".join(recent_names) if recent_names else "None recorded yet"
+    recent_table = build_recent_rooms_table(
+        rooms, heading="#### Recent Completed Rooms"
+    )
 
     return f"""{START}
 ### TryHackMe Summary
@@ -673,7 +729,8 @@ def build_tryhackme_summary(profile: dict, rooms: dict, badges: dict) -> str:
 
 {progress_summary}
 
-**Recent Activity:** {recent_str}.<br>
+{recent_table}
+
 _See [TRAINING.md](TRAINING.md#tryhackme) for complete TryHackMe room history, badge showcase, and room milestones._
 {END}"""
 
@@ -819,10 +876,13 @@ def build_tryhackme_detailed(profile: dict, rooms: dict, badges: dict) -> str:
     rows = []
     ordered = sorted(rooms.get("rooms", []), key=lambda item: item.get("completed", ""), reverse=True)
     for room in ordered:
-        name = room.get("name", "").replace("|", "\\|")
-        if room.get("url"):
-            name = f"[{name}]({room['url']})"
-        rows.append(f"| {name} | {room.get('difficulty') or '—'} | {room.get('completed', '—')} |")
+        name = md_cell(safe_public_text(room.get("name"), "Sanitised room"))
+        room_url = tryhackme_room_url(room.get("url"))
+        if room_url:
+            name = f"[{name}]({room_url})"
+        difficulty = md_cell(safe_public_text(room.get("difficulty"), "—"))
+        completed = md_cell(safe_public_text(room.get("completed"), "—"))
+        rows.append(f"| {name} | {difficulty} | {completed} |")
     if not rows:
         rows.append("| No rooms recorded yet | — | — |")
 
@@ -975,6 +1035,8 @@ def build_training_snapshot(
     return (
         "## Practical Training Snapshot\n\n"
         + "\n".join(lines)
+        + "\n\n"
+        + build_recent_rooms_table(rooms)
         + "\n\nSee [TRAINING.md](TRAINING.md) for the complete room history, badges, "
         "completion dates, milestones, and platform-specific evidence."
     )
@@ -1070,106 +1132,13 @@ def normalise_room(raw: dict) -> dict | None:
     }
 
 
-def scrape_cards(page, selector: str) -> list[dict]:
-    return page.locator(selector).evaluate_all("""elements => elements.map(el => {
-      const anchor = el.closest('a') || el.querySelector('a');
-      const text = (el.innerText || anchor?.innerText || '').trim();
-      const href = anchor?.href || '';
-      const image = el.querySelector('img');
-      return {name: text.split('\\n')[0].trim(), text, url: href, image: image?.src || ''};
-    })""")
-
-
-def load_page(page, url: str, label: str) -> None:
-    print(f"Loading {label}...", flush=True)
-    page.goto(url, wait_until="domcontentloaded", timeout=45000)
-    page.wait_for_timeout(3000)
-    print(f"Loaded {label}.", flush=True)
-
-
 def browser_sync(args) -> int:
-    try:
-        from playwright.sync_api import sync_playwright
-    except ImportError:
-        raise SystemExit("Playwright is not installed. Run: ./setup")
+    # Keep the legacy command as a compatibility alias for the same collector
+    # used by sync-portfolio. Maintaining a second DOM scraper here previously
+    # allowed the two user-facing routes to drift apart.
+    import room_sync
 
-    BROWSER_STATE.mkdir(parents=True, exist_ok=True)
-    profile_url = "https://tryhackme.com/p/PreMortem"
-    discovered_rooms: list[dict] = []
-
-    with sync_playwright() as playwright:
-        context = playwright.chromium.launch_persistent_context(
-            str(BROWSER_STATE),
-            headless=False,
-            channel="chrome",
-            viewport={"width": 1440, "height": 1000},
-        )
-        page = context.pages[0] if context.pages else context.new_page()
-        load_page(page, profile_url, "TryHackMe profile")
-        print("A separate Chrome window has opened for TryHackMe syncing.", flush=True)
-        print("Log into TryHackMe there if required, then return here and press Enter.", flush=True)
-        input()
-        print("Continuing sync...", flush=True)
-        load_page(page, profile_url, "authenticated profile")
-
-        page_text = page.locator("body").inner_text(timeout=10000)
-        if "/login" in page.url.lower() or ("Login" in page_text and "PreMortem" not in page_text):
-            context.close()
-            raise SystemExit("TryHackMe still appears logged out. Run ./sync-tryhackme again and complete login.")
-
-        room_pages = (
-            (profile_url, "profile rooms"),
-            (profile_url + "?tab=completed", "completed rooms"),
-            (profile_url + "?tab=rooms", "rooms tab"),
-        )
-        for url, label in room_pages:
-            load_page(page, url, label)
-            page.mouse.wheel(0, 5000)
-            page.wait_for_timeout(2000)
-            candidates = scrape_cards(page, "a[href*='/room/']")
-            print(f"Found {len(candidates)} room links on {label}.", flush=True)
-            for candidate in candidates:
-                text = candidate.get("text", "").lower()
-                if any(word in text for word in ("completed", "complete", "100%")) or "tab=completed" in url:
-                    candidate["url"] = urljoin("https://tryhackme.com", candidate["url"])
-                    room = normalise_room(candidate)
-                    if room:
-                        discovered_rooms.append(room)
-
-        # Badges are collected separately and reliably by badge_sync.py against the
-        # authenticated /api/v2/users/badges endpoint. Scraping the badges tab here
-        # was unreliable (it found nothing and could hang closing the browser), so
-        # room collection no longer touches badge data.
-        context.close()
-
-    rooms_data = read_json(ROOMS, {"rooms": []})
-    existing = {room["slug"] for room in rooms_data["rooms"]}
-    added = []
-    for room in {item["slug"]: item for item in discovered_rooms}.values():
-        if room["slug"] not in existing:
-            rooms_data["rooms"].append(room)
-            writeup_for(room)
-            existing.add(room["slug"])
-            added.append(room)
-    write_json(ROOMS, rooms_data)
-
-    # Preserve badges recorded by badge_sync.py; room collection must not clobber them.
-    badges_data = read_json(BADGES, {"badges": []})
-
-    profile = read_json(PROFILE, {})
-    profile.update({
-        "username": "PreMortem",
-        "profile_url": profile_url,
-        "last_sync": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat(),
-        "sync_method": "isolated-authenticated-browser",
-    })
-    write_json(PROFILE, profile)
-    regenerate_readme()
-
-    print(f"Found {len(discovered_rooms)} completed-room candidates.")
-    print(f"Added {len(added)} new room(s).")
-    for room in added:
-        print(f"  + {room['name']}")
+    added = room_sync.sync_rooms()
 
     if args.publish:
         run_git("add", "--", *PUBLISH_ALLOWLIST)
@@ -1180,7 +1149,7 @@ def browser_sync(args) -> int:
             run_git("commit", "-m", f"Sync TryHackMe activity ({dt.date.today().isoformat()})")
             run_git("push")
             print("Committed and pushed the update.")
-    return len(added)
+    return added
 
 
 def add_room(args):
@@ -1381,11 +1350,15 @@ def run_sync(requested: list[str], interactive: bool, auto_push: bool) -> int:
         elif platform == "cisco":
             outcomes.append(sync_cisco_platform(interactive))
 
-    # Always regenerate from whatever valid saved data now exists.
-    try:
-        regenerate_readme()
-    except SystemExit as exc:
-        print(f"README regeneration failed: {exc}")
+    # An entirely failed collection must not touch generated public files. A
+    # partial multi-platform run can still render the successful snapshots.
+    if any(outcome.ok for outcome in outcomes):
+        try:
+            regenerate_readme()
+        except SystemExit as exc:
+            print(f"README regeneration failed: {exc}")
+    else:
+        print("Skipping README/TRAINING regeneration because every sync failed.")
 
     changed_files = [line.strip() for line in run_git("status", "--short", check=False).stdout.splitlines()]
     _print_summary(requested, outcomes, changed_files)
