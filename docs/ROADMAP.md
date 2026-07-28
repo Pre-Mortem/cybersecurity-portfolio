@@ -24,12 +24,17 @@ This document outlines completed milestones and future enhancements for the **Pr
 
 ## Milestone 3 — Recruiter CV Redesign & Training History Separation (Completed)
 - [x] Redesign `README.md` as a personal-first, recruiter-facing cybersecurity portfolio for **Pre-Mortem**.
-- [x] Keep visible proof on the front page: evidence-backed skills, live training
-  totals, the complete saved room table, earned badge cabinet, personal
-  milestones, report links, platform states, privacy rules, technical links,
-  and concise portfolio statistics.
-- [x] Protect the introduction, About Me, project narratives, Current Focus, and
-  contact details outside the generated markers.
+- [x] Keep visible proof on the front page: a qualification and evidence
+  snapshot, evidence-backed skills, live training totals, the complete saved
+  room table, earned badge cabinet, personal milestones, report links, and
+  compact secondary-platform states.
+- [x] Protect the introduction, qualification, key areas, About Me, project
+  narratives, Current Focus, contact details, and concise automation summary
+  outside the generated evidence marker.
+- [x] Keep changing room and badge totals inside their own bounded snapshot
+  marker so regeneration cannot overwrite the surrounding authored profile.
+- [x] Keep long-form engine, authentication, privacy, schema, and roadmap
+  material in `docs/` rather than making the automation dominate the README.
 - [x] Create `TRAINING.md` for comprehensive, multi-platform activity tables.
 - [x] Restructure documentation into `docs/` (`SYNC_ENGINE.md`, `AUTHENTICATION.md`, `PRIVACY.md`, `DATA_SCHEMA.md`, `ROADMAP.md`).
 - [x] Modular write-up status tracking (distinguishing completed research from template stubs).

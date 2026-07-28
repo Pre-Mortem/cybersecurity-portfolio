@@ -115,7 +115,9 @@ class TestIdempotentRender(unittest.TestCase):
         self.assertNotIn(portfolio.START, a)
         self.assertIn("## TryHackMe", a)
         self.assertIn("### Achievement Cabinet", a)
-        self.assertIn("## How This Portfolio Is Maintained", a)
+        self.assertIn("## Practical Reports and Lab Evidence", a)
+        self.assertIn("## Other Platforms in Progress", a)
+        self.assertNotIn("## How This Portfolio Is Maintained", a)
         self.assertNotIn("Automated Sync Engine", a)
 
     def test_marker_updates_are_stable_and_preserve_authored_content(self):
@@ -125,6 +127,7 @@ class TestIdempotentRender(unittest.TestCase):
         htb_data = portfolio.read_optional_json(portfolio.HACKTHEBOX, {})
         cisco_data = cisco.empty_schema()
         readme_section = portfolio.render(profile, rooms, badges, htb_data, cisco_data)
+        snapshot_section = portfolio.render_profile_snapshot(rooms, badges)
         training_section = portfolio.render_training(profile, rooms, badges, htb_data, cisco_data)
 
         with tempfile.TemporaryDirectory() as directory:
@@ -133,6 +136,9 @@ class TestIdempotentRender(unittest.TestCase):
             authored_readme = (
                 "# Pre-Mortem — Cybersecurity Portfolio\n\n"
                 "I am developing practical cybersecurity skills.\n\n"
+                "## Profile Snapshot\n\n"
+                "Qualification and key areas remain authored.\n"
+                f"{portfolio.SNAPSHOT_START}\nold counts\n{portfolio.SNAPSHOT_END}\n\n"
                 "## About Me\n\nPractical work and safe design.\n\n"
                 "## What I Bring\n\nEvidence-backed capabilities.\n\n"
                 "## Selected Security Projects\n\n"
@@ -152,11 +158,11 @@ class TestIdempotentRender(unittest.TestCase):
             )
             with mock.patch.object(portfolio, "README", readme), \
                  mock.patch.object(portfolio, "TRAINING_MD", training):
-                portfolio.update_readme(readme_section)
+                portfolio.update_readme(readme_section, snapshot_section)
                 portfolio.update_training_md(training_section)
                 first = (readme.read_text(encoding="utf-8"),
                          training.read_text(encoding="utf-8"))
-                portfolio.update_readme(readme_section)
+                portfolio.update_readme(readme_section, snapshot_section)
                 portfolio.update_training_md(training_section)
                 second = (readme.read_text(encoding="utf-8"),
                           training.read_text(encoding="utf-8"))
@@ -164,6 +170,8 @@ class TestIdempotentRender(unittest.TestCase):
             self.assertEqual(first, second)
             for personal_section in (
                 "I am developing practical cybersecurity skills.",
+                "## Profile Snapshot",
+                "Qualification and key areas remain authored.",
                 "## About Me",
                 "## What I Bring",
                 "### PacketPunch",
@@ -174,19 +182,19 @@ class TestIdempotentRender(unittest.TestCase):
             ):
                 self.assertIn(personal_section, first[0])
             for evidence_section in (
-                "## Qualifications",
                 "## Skills and Evidence",
-                "## Practical Labs and Reports",
+                "## Practical Reports and Lab Evidence",
                 "## TryHackMe",
                 "### Completed Rooms — Recent First",
                 "### Achievement Cabinet",
                 "### Room Milestones",
-                "## Hack The Box",
-                "## Cisco Networking Academy",
-                "## Portfolio Statistics",
-                "## How This Portfolio Is Maintained",
+                "## Other Platforms in Progress",
             ):
                 self.assertIn(evidence_section, first[0])
+            self.assertIn(
+                "- **TryHackMe evidence:** 16 completed rooms and 6 earned badges",
+                first[0],
+            )
             self.assertTrue(first[1].startswith("Training-authored introduction."))
             self.assertTrue(first[1].endswith("Training-authored closing.\n"))
 
@@ -198,10 +206,18 @@ class TestIdempotentRender(unittest.TestCase):
             htb.empty_schema(),
             cisco.empty_schema(),
         )
-        self.assertIn("## Hack The Box", rendered)
-        self.assertIn("No completed labs recorded yet", rendered)
-        self.assertIn("## Cisco Networking Academy", rendered)
-        self.assertIn("no achievements imported", rendered)
+        self.assertIn("## Other Platforms in Progress", rendered)
+        self.assertIn(
+            "**Hack The Box:** integration is ready; no completed labs are recorded yet.",
+            rendered,
+        )
+        self.assertIn(
+            "**Cisco Networking Academy:** the offline integration foundation is ready; "
+            "no achievements have been imported yet.",
+            rendered,
+        )
+        self.assertNotIn("## Hack The Box", rendered)
+        self.assertNotIn("## Cisco Networking Academy", rendered)
         self.assertNotIn("### Completed Rooms — Recent First", rendered)
         self.assertNotIn("### Achievement Cabinet", rendered)
         self.assertNotIn("### Room Milestones", rendered)
@@ -217,10 +233,12 @@ class TestIdempotentRender(unittest.TestCase):
             _sample_htb(),
             cisco_data,
         )
-        self.assertIn("## Hack The Box", rendered)
-        self.assertIn("<strong>Machines</strong>&nbsp;<br>1", rendered)
-        self.assertIn("## Cisco Networking Academy", rendered)
-        self.assertIn("<strong>Courses</strong>&nbsp;<br>1", rendered)
+        self.assertIn("## Other Platforms in Progress", rendered)
+        self.assertIn("**Hack The Box:** 1 machine, 1 challenge, 1 module", rendered)
+        self.assertIn(
+            "**Cisco Networking Academy:** 1 course, 1 badge, 1 certificate",
+            rendered,
+        )
         self.assertNotIn("Fiction Box", rendered)
         self.assertNotIn("Fixture Networking Basics", rendered)
 
@@ -237,16 +255,24 @@ class TestIdempotentRender(unittest.TestCase):
         )
 
         expected_sections = (
-            "## Qualifications",
             "## Skills and Evidence",
-            "## Practical Labs and Reports",
+            "## Practical Reports and Lab Evidence",
             "### Lab Notes and Drafts",
             "## TryHackMe",
             "### Completed Rooms — Recent First",
             "### Achievement Cabinet",
             "### Room Milestones",
-            "## Hack The Box",
-            "## Cisco Networking Academy",
+            "## Other Platforms in Progress",
+        )
+        for section in expected_sections:
+            self.assertIn(section, rendered)
+        self.assertIn("Rooms Completed</strong>&nbsp;<br>16", rendered)
+        self.assertIn("Badges Earned</strong>&nbsp;<br>6", rendered)
+        self.assertIn("Easy</strong>&nbsp;<br>15", rendered)
+        self.assertIn("Info</strong>&nbsp;<br>1", rendered)
+        self.assertIn("16 lab notes and write-up drafts", rendered)
+        self.assertIn("23 July 2026, 11:44 UTC", rendered)
+        for removed_section in (
             "## Portfolio Statistics",
             "## How This Portfolio Is Maintained",
             "### Supported Platforms",
@@ -258,16 +284,8 @@ class TestIdempotentRender(unittest.TestCase):
             "### Technical Documentation",
             "### Roadmap",
             "### Repository Rules",
-        )
-        for section in expected_sections:
-            self.assertIn(section, rendered)
-        self.assertIn("Rooms Completed</strong>&nbsp;<br>16", rendered)
-        self.assertIn("Badges Earned</strong>&nbsp;<br>6", rendered)
-        self.assertIn("Easy</strong>&nbsp;<br>15", rendered)
-        self.assertIn("Info</strong>&nbsp;<br>1", rendered)
-        self.assertIn("16 lab notes and write-up drafts", rendered)
-        self.assertIn("603/5762/9", rendered)
-        self.assertIn("23 July 2026, 11:44 UTC", rendered)
+        ):
+            self.assertNotIn(removed_section, rendered)
 
     def test_all_badges_render_as_clickable_images(self):
         badges = portfolio.read_json(portfolio.BADGES, {"badges": []})
@@ -383,17 +401,25 @@ class TestIdempotentRender(unittest.TestCase):
         readme = portfolio.README.read_text(encoding="utf-8")
         expected_order = (
             "# Pre-Mortem — Cybersecurity Portfolio",
+            "## Profile Snapshot",
             "## About Me",
             "## What I Bring",
             "## Selected Security Projects",
             portfolio.GEN_START,
             "## Current Focus",
             "## Contact and Profiles",
+            "## About the Portfolio Automation",
         )
         positions = [readme.index(section) for section in expected_order]
         self.assertEqual(positions, sorted(positions))
         self.assertEqual(readme.count(portfolio.GEN_START), 1)
         self.assertEqual(readme.count(portfolio.GEN_END), 1)
+        self.assertEqual(readme.count(portfolio.SNAPSHOT_START), 1)
+        self.assertEqual(readme.count(portfolio.SNAPSHOT_END), 1)
+        self.assertLess(
+            readme.index(portfolio.SNAPSHOT_START),
+            readme.index("## About Me"),
+        )
         self.assertIn(
             "I am developing practical cybersecurity skills through formal study",
             readme,
@@ -403,19 +429,19 @@ class TestIdempotentRender(unittest.TestCase):
         self.assertIn("Security tools with impact.", readme)
         self.assertNotIn("16 room write-up stubs", readme)
         for evidence_section in (
-            "## Qualifications",
             "## Skills and Evidence",
-            "## Practical Labs and Reports",
+            "## Practical Reports and Lab Evidence",
             "## TryHackMe",
             "### Completed Rooms — Recent First",
             "### Achievement Cabinet",
             "### Room Milestones",
-            "## Hack The Box",
-            "## Cisco Networking Academy",
-            "## Portfolio Statistics",
-            "## How This Portfolio Is Maintained",
+            "## Other Platforms in Progress",
         ):
             self.assertIn(evidence_section, readme)
+        self.assertIn("603/5762/9", readme)
+        self.assertIn("16 completed rooms and 6 earned badges", readme)
+        self.assertNotIn("## Portfolio Statistics", readme)
+        self.assertNotIn("## How This Portfolio Is Maintained", readme)
         self.assertNotRegex(readme, r"/Users/[^/\s]+")
         self.assertNotRegex(
             readme,
@@ -562,6 +588,7 @@ class TestRunSyncOutcomes(unittest.TestCase):
             rewritten = paths["README"].read_text(encoding="utf-8")
             self.assertEqual(rc, 1)
             for personal_section in (
+                "## Profile Snapshot",
                 "## About Me",
                 "## What I Bring",
                 "## Selected Security Projects",
@@ -570,14 +597,10 @@ class TestRunSyncOutcomes(unittest.TestCase):
             ):
                 self.assertIn(personal_section, rewritten)
             for evidence_section in (
-                "## Qualifications",
                 "## Skills and Evidence",
-                "## Practical Labs and Reports",
+                "## Practical Reports and Lab Evidence",
                 "## TryHackMe",
-                "## Hack The Box",
-                "## Cisco Networking Academy",
-                "## Portfolio Statistics",
-                "## How This Portfolio Is Maintained",
+                "## Other Platforms in Progress",
             ):
                 self.assertIn(evidence_section, rewritten)
 

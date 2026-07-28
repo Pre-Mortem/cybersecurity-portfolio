@@ -20,17 +20,19 @@ portfolio.py (CLI & Orchestrator)
 ```
 
 - **Data Storage**: Collected evidence is stored in versioned JSON files under `data/` (`rooms.json`, `badges.json`, `profile.json`, `hackthebox.json`, `cisco_netacad.json`, `evidence.json`).
-- **Rendering Engine**: `portfolio.py` parses saved JSON data and updates bounded
-  comment markers. In `README.md`, the generated region contains the public
-  evidence layer: qualification status, evidence-backed skills, training
-  totals, the complete saved room table, earned badges, personal room
-  milestones, report and draft links, platform status, concise statistics,
-  privacy rules, and supporting technical links. The personal introduction,
-  About Me, working style, project narratives, Current Focus, and contact
-  details are maintained outside that region and cannot be replaced by a
-  platform sync. Platforms without completed activity render an accurate empty
-  state rather than invented achievements.
-  `TRAINING.md` remains the complete generated platform history.
+- **Rendering Engine**: `portfolio.py` parses saved JSON data and updates two
+  bounded regions in `README.md`. The small `PROFILE-SNAPSHOT` region owns only
+  the changing TryHackMe room and badge totals. The main `PORTFOLIO` region
+  owns evidence-backed skills, the complete saved TryHackMe room table, the
+  earned badge cabinet, room milestones, report and draft links, and compact
+  Hack The Box and Cisco status. The personal introduction, qualification,
+  key areas, About Me, working style, project narratives, Current Focus,
+  contact details, and automation summary are maintained outside those regions
+  and cannot be replaced by a platform sync. Platforms without completed
+  activity render an accurate empty state rather than invented achievements.
+  `TRAINING.md` remains the complete generated platform history, while detailed
+  engine, authentication, privacy, schema, and roadmap information remains in
+  `docs/`.
 
 ---
 
