@@ -8,16 +8,16 @@ platform data by the [Cybersecurity Portfolio Sync Engine](docs/SYNC_ENGINE.md).
 ## TryHackMe
 
 **Profile:** [PreMortem](https://tryhackme.com/p/PreMortem)<br>
-**Last local sync:** 28 July 2026, 13:58 UTC
+**Last local sync:** 28 July 2026, 15:12 UTC
 
 <div align="center">
 
 <table>
 <tr>
-<td align="center">&nbsp;<strong>Rooms Completed</strong>&nbsp;<br>16</td>
+<td align="center">&nbsp;<strong>Rooms Completed</strong>&nbsp;<br>27</td>
 <td align="center">&nbsp;<strong>Badges Earned</strong>&nbsp;<br>6</td>
-<td align="center">&nbsp;<strong>Easy</strong>&nbsp;<br>15</td>
-<td align="center">&nbsp;<strong>Info</strong>&nbsp;<br>1</td>
+<td align="center">&nbsp;<strong>Easy</strong>&nbsp;<br>17</td>
+<td align="center">&nbsp;<strong>Info</strong>&nbsp;<br>10</td>
 </tr>
 </table>
 
@@ -27,13 +27,24 @@ platform data by the [Cybersecurity Portfolio Sync Engine](docs/SYNC_ENGINE.md).
 
 | Room | Difficulty | Completed |
 |---|---|---|
-| [Linux Fundamentals Part 1](https://tryhackme.com/room/linuxfundamentalspart1) | Easy | 2026-07-23 |
+| [Introductory Researching](https://tryhackme.com/room/introtoresearch) | Easy | 2026-07-28 |
+| [Starting Out In Cyber Sec](https://tryhackme.com/room/startingoutincybersec) | Easy | 2026-07-28 |
+| [Linux Fundamentals Part 2](https://tryhackme.com/room/linuxfundamentalspart2) | Info | 2026-07-28 |
+| [How Websites Work](https://tryhackme.com/room/howwebsiteswork) | Easy | 2026-07-28 |
+| [Linux Fundamentals Part 3](https://tryhackme.com/room/linuxfundamentalspart3) | Info | 2026-07-28 |
+| [HTTP in Detail](https://tryhackme.com/room/httpindetail) | Easy | 2026-07-28 |
+| [OSI Model](https://tryhackme.com/room/osimodelzi) | Info | 2026-07-28 |
+| [Packets &amp; Frames](https://tryhackme.com/room/packetsframes) | Info | 2026-07-28 |
+| [Extending Your Network](https://tryhackme.com/room/extendingyournetwork) | Info | 2026-07-28 |
+| [Malware Classification](https://tryhackme.com/room/malwareclassification) | Easy | 2026-07-28 |
+| [The CIA Triad](https://tryhackme.com/room/theciatriad) | Easy | 2026-07-28 |
+| [Linux Fundamentals Part 1](https://tryhackme.com/room/linuxfundamentalspart1) | Info | 2026-07-23 |
 | [DNS in Detail](https://tryhackme.com/room/dnsindetail) | Easy | 2026-07-23 |
-| [What is Networking?](https://tryhackme.com/room/whatisnetworking) | Easy | 2026-07-23 |
-| [Intro to LAN](https://tryhackme.com/room/introtolan) | Easy | 2026-07-23 |
+| [What is Networking?](https://tryhackme.com/room/whatisnetworking) | Info | 2026-07-23 |
+| [Intro to LAN](https://tryhackme.com/room/introtolan) | Info | 2026-07-23 |
 | [Walking An Application](https://tryhackme.com/room/walkinganapplication) | Easy | 2026-07-23 |
 | [Pentesting Fundamentals](https://tryhackme.com/room/pentestingfundamentals) | Easy | 2026-07-23 |
-| [Principles of Security](https://tryhackme.com/room/principlesofsecurity) | Easy | 2026-07-23 |
+| [Principles of Security](https://tryhackme.com/room/principlesofsecurity) | Info | 2026-07-23 |
 | [Metasploit: Exploitation](https://tryhackme.com/room/metasploitexploitation) | Easy | 2026-07-23 |
 | [Content Discovery](https://tryhackme.com/room/contentdiscovery) | Easy | 2026-07-23 |
 | [Subdomain Enumeration](https://tryhackme.com/room/subdomainenumeration) | Easy | 2026-07-23 |
@@ -107,10 +118,10 @@ _Portfolio progress milestones — a personal tracker, not official TryHackMe ba
 ✅<br><strong>10 Rooms</strong><br>Complete
 </td>
 <td align="center" width="120">
-🚧<br><strong>25 Rooms</strong><br>16 / 25
+✅<br><strong>25 Rooms</strong><br>Complete
 </td>
 <td align="center" width="120">
-⬜<br><strong>50 Rooms</strong><br>Upcoming
+🚧<br><strong>50 Rooms</strong><br>27 / 50
 </td>
 <td align="center" width="120">
 ⬜<br><strong>100 Rooms</strong><br>Upcoming

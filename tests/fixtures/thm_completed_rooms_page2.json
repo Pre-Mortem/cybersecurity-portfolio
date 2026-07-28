@@ -1,0 +1,26 @@
+{
+  "status": "success",
+  "data": {
+    "docs": [
+      {"type": "walkthrough", "difficulty": "easy", "code": "introtoresearch", "title": "Introductory Researching"},
+      {"type": "walkthrough", "difficulty": "easy", "code": "startingoutincybersec", "title": "Starting Out In Cyber Sec"},
+      {"type": "walkthrough", "difficulty": "info", "code": "linuxfundamentalspart2", "title": "Linux Fundamentals Part 2"},
+      {"type": "walkthrough", "difficulty": "easy", "code": "howwebsiteswork", "title": "How Websites Work"},
+      {"type": "walkthrough", "difficulty": "info", "code": "linuxfundamentalspart3", "title": "Linux Fundamentals Part 3"},
+      {"type": "walkthrough", "difficulty": "easy", "code": "httpindetail", "title": "HTTP in Detail"},
+      {"type": "walkthrough", "difficulty": "info", "code": "osimodelzi", "title": "OSI Model"},
+      {"type": "walkthrough", "difficulty": "info", "code": "packetsframes", "title": "Packets & Frames"},
+      {"type": "walkthrough", "difficulty": "info", "code": "extendingyournetwork", "title": "Extending Your Network"},
+      {"type": "walkthrough", "difficulty": "easy", "code": "malwareclassification", "title": "Malware Classification"},
+      {"type": "walkthrough", "difficulty": "easy", "code": "theciatriad", "title": "The CIA Triad"}
+    ],
+    "totalDocs": 27,
+    "limit": 16,
+    "page": 2,
+    "totalPages": 2,
+    "nextPage": null,
+    "prevPage": 1,
+    "hasPrevPage": true,
+    "hasNextPage": false
+  }
+}

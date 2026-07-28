@@ -9,7 +9,7 @@ import json
 import re
 import subprocess
 from pathlib import Path
-from urllib.parse import quote, urljoin, urlparse
+from urllib.parse import quote, urlparse
 
 ROOT = Path(__file__).resolve().parent
 CONFIG = ROOT / "config.example.json"
@@ -1095,106 +1095,13 @@ def normalise_room(raw: dict) -> dict | None:
     }
 
 
-def scrape_cards(page, selector: str) -> list[dict]:
-    return page.locator(selector).evaluate_all("""elements => elements.map(el => {
-      const anchor = el.closest('a') || el.querySelector('a');
-      const text = (el.innerText || anchor?.innerText || '').trim();
-      const href = anchor?.href || '';
-      const image = el.querySelector('img');
-      return {name: text.split('\\n')[0].trim(), text, url: href, image: image?.src || ''};
-    })""")
-
-
-def load_page(page, url: str, label: str) -> None:
-    print(f"Loading {label}...", flush=True)
-    page.goto(url, wait_until="domcontentloaded", timeout=45000)
-    page.wait_for_timeout(3000)
-    print(f"Loaded {label}.", flush=True)
-
-
 def browser_sync(args) -> int:
-    try:
-        from playwright.sync_api import sync_playwright
-    except ImportError:
-        raise SystemExit("Playwright is not installed. Run: ./setup")
+    # Preserve the legacy command, but route it through the same complete,
+    # validated API collector used by the multi-platform CLI. The former
+    # duplicate DOM scraper stopped after the first 16 rendered cards.
+    import room_sync
 
-    BROWSER_STATE.mkdir(parents=True, exist_ok=True)
-    profile_url = "https://tryhackme.com/p/PreMortem"
-    discovered_rooms: list[dict] = []
-
-    with sync_playwright() as playwright:
-        context = playwright.chromium.launch_persistent_context(
-            str(BROWSER_STATE),
-            headless=False,
-            channel="chrome",
-            viewport={"width": 1440, "height": 1000},
-        )
-        page = context.pages[0] if context.pages else context.new_page()
-        load_page(page, profile_url, "TryHackMe profile")
-        print("A separate Chrome window has opened for TryHackMe syncing.", flush=True)
-        print("Log into TryHackMe there if required, then return here and press Enter.", flush=True)
-        input()
-        print("Continuing sync...", flush=True)
-        load_page(page, profile_url, "authenticated profile")
-
-        page_text = page.locator("body").inner_text(timeout=10000)
-        if "/login" in page.url.lower() or ("Login" in page_text and "PreMortem" not in page_text):
-            context.close()
-            raise SystemExit("TryHackMe still appears logged out. Run ./sync-tryhackme again and complete login.")
-
-        room_pages = (
-            (profile_url, "profile rooms"),
-            (profile_url + "?tab=completed", "completed rooms"),
-            (profile_url + "?tab=rooms", "rooms tab"),
-        )
-        for url, label in room_pages:
-            load_page(page, url, label)
-            page.mouse.wheel(0, 5000)
-            page.wait_for_timeout(2000)
-            candidates = scrape_cards(page, "a[href*='/room/']")
-            print(f"Found {len(candidates)} room links on {label}.", flush=True)
-            for candidate in candidates:
-                text = candidate.get("text", "").lower()
-                if any(word in text for word in ("completed", "complete", "100%")) or "tab=completed" in url:
-                    candidate["url"] = urljoin("https://tryhackme.com", candidate["url"])
-                    room = normalise_room(candidate)
-                    if room:
-                        discovered_rooms.append(room)
-
-        # Badges are collected separately and reliably by badge_sync.py against the
-        # authenticated /api/v2/users/badges endpoint. Scraping the badges tab here
-        # was unreliable (it found nothing and could hang closing the browser), so
-        # room collection no longer touches badge data.
-        context.close()
-
-    rooms_data = read_json(ROOMS, {"rooms": []})
-    existing = {room["slug"] for room in rooms_data["rooms"]}
-    added = []
-    for room in {item["slug"]: item for item in discovered_rooms}.values():
-        if room["slug"] not in existing:
-            rooms_data["rooms"].append(room)
-            writeup_for(room)
-            existing.add(room["slug"])
-            added.append(room)
-    write_json(ROOMS, rooms_data)
-
-    # Preserve badges recorded by badge_sync.py; room collection must not clobber them.
-    badges_data = read_json(BADGES, {"badges": []})
-
-    profile = read_json(PROFILE, {})
-    profile.update({
-        "username": "PreMortem",
-        "profile_url": profile_url,
-        "last_sync": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat(),
-        "sync_method": "isolated-authenticated-browser",
-    })
-    write_json(PROFILE, profile)
-    regenerate_readme()
-
-    print(f"Found {len(discovered_rooms)} completed-room candidates.")
-    print(f"Added {len(added)} new room(s).")
-    for room in added:
-        print(f"  + {room['name']}")
+    added = room_sync.sync_rooms()
 
     if args.publish:
         run_git("add", "--", *PUBLISH_ALLOWLIST)
@@ -1205,7 +1112,7 @@ def browser_sync(args) -> int:
             run_git("commit", "-m", f"Sync TryHackMe activity ({dt.date.today().isoformat()})")
             run_git("push")
             print("Committed and pushed the update.")
-    return len(added)
+    return added
 
 
 def add_room(args):
@@ -1409,11 +1316,16 @@ def run_sync(requested: list[str], interactive: bool, auto_push: bool) -> int:
         elif platform == "cisco":
             outcomes.append(sync_cisco_platform(interactive))
 
-    # Always regenerate from whatever valid saved data now exists.
-    try:
-        regenerate_readme()
-    except SystemExit as exc:
-        print(f"README regeneration failed: {exc}")
+    # A wholly failed collection must not touch generated public output. In a
+    # multi-platform run, successful platforms can still render while another
+    # platform fails independently.
+    if any(outcome.ok for outcome in outcomes):
+        try:
+            regenerate_readme()
+        except SystemExit as exc:
+            print(f"README regeneration failed: {exc}")
+    else:
+        print("Skipping README/TRAINING regeneration because every sync failed.")
 
     changed_files = [line.strip() for line in run_git("status", "--short", check=False).stdout.splitlines()]
     _print_summary(requested, outcomes, changed_files)

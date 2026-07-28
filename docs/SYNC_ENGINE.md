@@ -40,7 +40,24 @@ portfolio.py (CLI & Orchestrator)
 
 1. **TryHackMe**
    - Synced data: Completed rooms, difficulty levels, completion dates, badges, profile metrics.
-   - Mechanism: Authenticated Playwright browser session (`.thm-browser/`) and validated API endpoints.
+   - Mechanism: Authenticated Playwright browser session (`.thm-browser/`) and
+     the completed-history view's observed numbered
+     `/api/v2/public-profile/completed-rooms` fetch response. The collector uses
+     the response's explicit page size and follows every `nextPage` until
+     `hasNextPage` is false on `totalPages`.
+   - Completeness: every page number and per-page count is logged; stable room
+     codes are deduplicated; the final unique count must match `totalDocs` and,
+     when available, the authenticated account's completed-room statistic.
+     Malformed records, empty intermediate pages, repeated/non-advancing pages,
+     inconsistent totals, or a snapshot smaller than saved evidence cause a
+     clear failure.
+   - Failure safety: a failed collection does not write `data/rooms.json`,
+     advance `last_sync`, or regenerate `README.md` or `TRAINING.md`. Existing
+     platform evidence is retained.
+   - Completion dates: exact timestamps are preferred when supplied. The
+     current response omits completion timestamps, so newly discovered rooms
+     use the local sync date with
+     `completion_date_source=sync-date-fallback`; existing dates are preserved.
 
 2. **Hack The Box**
    - Synced data: Labs (Machines, Sherlocks, Challenges, Badges, Rank) and Academy (Modules, Paths, Certifications).
@@ -130,6 +147,7 @@ Browser session profiles (`.thm-browser/`, `.htb-browser/`, `.cisco-browser/`),
 diagnostic dumps, temporary files, and raw response logs are strictly excluded
 from Git tracking via `.gitignore` and pre-commit checks.
 
-Each platform returns an independent outcome. Rendering always uses the valid
-saved snapshots that remain on disk, so a Cisco failure cannot erase or replace
-TryHackMe or Hack The Box data.
+Each platform returns an independent outcome. A multi-platform run renders when
+at least one selected platform succeeds, so one platform failure cannot erase
+another platform's saved evidence. If every selected sync fails, public
+README/TRAINING regeneration is skipped.

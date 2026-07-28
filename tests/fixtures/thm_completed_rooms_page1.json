@@ -1,0 +1,31 @@
+{
+  "status": "success",
+  "data": {
+    "docs": [
+      {"type": "walkthrough", "difficulty": "info", "code": "linuxfundamentalspart1", "title": "Linux Fundamentals Part 1"},
+      {"type": "walkthrough", "difficulty": "easy", "code": "dnsindetail", "title": "DNS in Detail"},
+      {"type": "walkthrough", "difficulty": "info", "code": "whatisnetworking", "title": "What is Networking?"},
+      {"type": "walkthrough", "difficulty": "info", "code": "introtolan", "title": "Intro to LAN"},
+      {"type": "walkthrough", "difficulty": "easy", "code": "walkinganapplication", "title": "Walking An Application"},
+      {"type": "walkthrough", "difficulty": "easy", "code": "pentestingfundamentals", "title": "Pentesting Fundamentals"},
+      {"type": "walkthrough", "difficulty": "info", "code": "principlesofsecurity", "title": "Principles of Security"},
+      {"type": "walkthrough", "difficulty": "easy", "code": "metasploitexploitation", "title": "Metasploit: Exploitation"},
+      {"type": "walkthrough", "difficulty": "easy", "code": "contentdiscovery", "title": "Content Discovery"},
+      {"type": "walkthrough", "difficulty": "easy", "code": "subdomainenumeration", "title": "Subdomain Enumeration"},
+      {"type": "walkthrough", "difficulty": "easy", "code": "authenticationbypass", "title": "Authentication Bypass"},
+      {"type": "walkthrough", "difficulty": "easy", "code": "metasploitintro", "title": "Metasploit: Introduction"},
+      {"type": "walkthrough", "difficulty": "easy", "code": "idor", "title": "IDOR"},
+      {"type": "walkthrough", "difficulty": "easy", "code": "meterpreter", "title": "Metasploit: Meterpreter"},
+      {"type": "walkthrough", "difficulty": "easy", "code": "offensivesecurityintro", "title": "Offensive Security Intro"},
+      {"type": "walkthrough", "difficulty": "info", "code": "careersincyber", "title": "Careers in Cyber"}
+    ],
+    "totalDocs": 27,
+    "limit": 16,
+    "page": 1,
+    "totalPages": 2,
+    "nextPage": 2,
+    "prevPage": null,
+    "hasPrevPage": false,
+    "hasNextPage": true
+  }
+}

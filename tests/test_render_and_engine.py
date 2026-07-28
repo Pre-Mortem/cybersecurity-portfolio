@@ -192,7 +192,8 @@ class TestIdempotentRender(unittest.TestCase):
             ):
                 self.assertIn(evidence_section, first[0])
             self.assertIn(
-                "- **TryHackMe evidence:** 16 completed rooms and 6 earned badges",
+                f"- **TryHackMe evidence:** {len(rooms['rooms'])} completed rooms "
+                f"and {len(badges['badges'])} earned badges",
                 first[0],
             )
             self.assertTrue(first[1].startswith("Training-authored introduction."))
@@ -266,12 +267,29 @@ class TestIdempotentRender(unittest.TestCase):
         )
         for section in expected_sections:
             self.assertIn(section, rendered)
-        self.assertIn("Rooms Completed</strong>&nbsp;<br>16", rendered)
-        self.assertIn("Badges Earned</strong>&nbsp;<br>6", rendered)
-        self.assertIn("Easy</strong>&nbsp;<br>15", rendered)
-        self.assertIn("Info</strong>&nbsp;<br>1", rendered)
-        self.assertIn("16 lab notes and write-up drafts", rendered)
-        self.assertIn("23 July 2026, 11:44 UTC", rendered)
+        room_count = len(rooms["rooms"])
+        badge_count = len(badges["badges"])
+        difficulty_counts = {}
+        for room in rooms["rooms"]:
+            difficulty = room.get("difficulty") or ""
+            difficulty_counts[difficulty] = difficulty_counts.get(difficulty, 0) + 1
+        self.assertIn(
+            f"Rooms Completed</strong>&nbsp;<br>{room_count}", rendered
+        )
+        self.assertIn(
+            f"Badges Earned</strong>&nbsp;<br>{badge_count}", rendered
+        )
+        for difficulty, count in difficulty_counts.items():
+            if difficulty:
+                self.assertIn(
+                    f"{difficulty}</strong>&nbsp;<br>{count}", rendered
+                )
+        self.assertIn(
+            f"{room_count} lab notes and write-up drafts", rendered
+        )
+        self.assertIn(
+            portfolio.format_sync_timestamp(profile["last_sync"]), rendered
+        )
         for removed_section in (
             "## Portfolio Statistics",
             "## How This Portfolio Is Maintained",
@@ -333,7 +351,7 @@ class TestIdempotentRender(unittest.TestCase):
         table_rows = [line for line in rendered.splitlines() if line.startswith("| [")]
         self.assertEqual(len(table_rows), len(rooms["rooms"]))
         for room in rooms["rooms"]:
-            self.assertIn(room["name"], rendered)
+            self.assertIn(portfolio.md_cell(room["name"]), rendered)
             self.assertIn(room["url"], rendered)
 
         limited = portfolio.build_recent_rooms_section(rooms, limit=10)
@@ -439,7 +457,13 @@ class TestIdempotentRender(unittest.TestCase):
         ):
             self.assertIn(evidence_section, readme)
         self.assertIn("603/5762/9", readme)
-        self.assertIn("16 completed rooms and 6 earned badges", readme)
+        rooms = portfolio.read_json(portfolio.ROOMS, {"rooms": []})
+        badges = portfolio.read_json(portfolio.BADGES, {"badges": []})
+        self.assertIn(
+            f"{len(rooms['rooms'])} completed rooms and "
+            f"{len(badges['badges'])} earned badges",
+            readme,
+        )
         self.assertNotIn("## Portfolio Statistics", readme)
         self.assertNotIn("## How This Portfolio Is Maintained", readme)
         self.assertNotRegex(readme, r"/Users/[^/\s]+")
@@ -529,10 +553,11 @@ class TestRunSyncOutcomes(unittest.TestCase):
     def test_complete_failure_returns_one(self):
         bad = portfolio.PlatformOutcome("Hack The Box", False, "fail")
         with mock.patch.object(portfolio, "sync_hackthebox_platform", return_value=bad), \
-             mock.patch.object(portfolio, "regenerate_readme"), \
+             mock.patch.object(portfolio, "regenerate_readme") as regenerate, \
              mock.patch.object(portfolio, "run_git", return_value=SimpleNamespace(stdout="")):
             rc = portfolio.run_sync(["hackthebox"], interactive=False, auto_push=False)
         self.assertEqual(rc, 1)
+        regenerate.assert_not_called()
 
     def test_partial_cisco_failure_is_isolated(self):
         ok = portfolio.PlatformOutcome("TryHackMe", True, "ok", {"rooms": 16})
