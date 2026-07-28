@@ -30,8 +30,22 @@ This document outlines completed milestones and future enhancements for the **Pr
 
 ---
 
-## Milestone 4 — Cisco Networking Academy Integration (Planned)
-- [ ] Dedicated isolated session directory (`.cisco-browser/`).
-- [ ] Automated sync for Cisco NetAcad course completions, badges, and certificates.
-- [ ] Sanitised JSON storage (`data/cisco_netacad.json`).
-- [ ] Strict public identity scrub (ensuring real name is never published, displaying course title, completion date, and skills only).
+## Milestone 4 — Cisco Networking Academy Integration (In Progress)
+
+### Architecture and Offline Foundation (Completed)
+- [x] Reserve and Git-ignore the dedicated isolated session directory (`.cisco-browser/`).
+- [x] Add the isolated Cisco platform module (`platforms/cisco_netacad.py`).
+- [x] Define and validate sanitised schema v1 storage (`data/cisco_netacad.json`).
+- [x] Add allow-list normalisation, identity-field removal, sensitive-text scrubbing, atomic writes, and preserve-on-failure behaviour.
+- [x] Integrate Cisco into CLI platform selection and saved-data rendering for `README.md` and `TRAINING.md`.
+- [x] Add deterministic offline fixtures and tests for valid, partial, malformed, and identity-leaking input.
+
+### Interactive Browser Collection (Next)
+- [ ] Inspect the live Cisco NetAcad user journey through the isolated browser profile without guessing endpoints.
+- [ ] Support manual login, SSO, and MFA in the user-controlled browser window.
+- [ ] Collect course completion metadata and completion dates from reliably observed page data.
+- [ ] Collect badges, certificates, and associated skills only where reliably exposed.
+- [ ] Validate the live collector against the schema and privacy boundary before enabling successful Cisco sync status.
+
+Live Cisco collection is **not implemented yet**. The current CLI selection
+reports that limitation and preserves all saved platform data.

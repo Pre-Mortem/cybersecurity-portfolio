@@ -17,6 +17,7 @@ ROOMS = ROOT / "data/rooms.json"
 PROFILE = ROOT / "data/profile.json"
 BADGES = ROOT / "data/badges.json"
 HACKTHEBOX = ROOT / "data/hackthebox.json"
+CISCO_NETACAD = ROOT / "data/cisco_netacad.json"
 EVIDENCE = ROOT / "data/evidence.json"
 README = ROOT / "README.md"
 TRAINING_MD = ROOT / "TRAINING.md"
@@ -718,17 +719,64 @@ def build_hackthebox_summary(data: dict | None = None) -> str:
     )
 
 
-def build_cisco_summary() -> str:
-    return (
-        "### Cisco Networking Academy Summary\n\n"
-        "**Status:** Integration planned (Roadmap item)<br>\n"
-        "_Public identity protection enabled by default. Only non-identifying achievement details "
-        "(course title, completion status, date, badge, skills) will be published. "
-        "See [docs/ROADMAP.md](docs/ROADMAP.md) for details._"
+def _validated_cisco_data(data: dict | None = None) -> tuple[dict, str]:
+    """Return safe Cisco data and its render state.
+
+    Invalid or malformed saved data is never rendered. Importing here keeps the
+    renderer compatible with installations that only use the legacy commands.
+    """
+    from platforms import cisco_netacad as cisco
+
+    if data is None:
+        data = read_optional_json(CISCO_NETACAD, None)
+    if not isinstance(data, dict) or cisco.validate_data(data):
+        return cisco.empty_schema("unavailable"), "unavailable"
+    return data, data.get("collection_status", "unavailable")
+
+
+def _cisco_counts(data: dict) -> list[tuple[str, int]]:
+    return [
+        ("Courses", len(data.get("courses") or [])),
+        ("Badges", len(data.get("badges") or [])),
+        ("Certificates", len(data.get("certificates") or [])),
+    ]
+
+
+def build_cisco_summary(data: dict | None = None) -> str:
+    data, state = _validated_cisco_data(data)
+    header = "### Cisco Networking Academy Summary\n\n"
+    if state == "unavailable":
+        return header + (
+            "**Status:** Saved Cisco data is unavailable or failed validation.<br>\n"
+            "_No Cisco account or identity data is rendered. Other platform data remains unaffected._"
+        )
+    if state != "available":
+        return header + (
+            "**Status:** Offline integration foundation ready; no achievements imported.<br>\n"
+            "_Live browser extraction remains a future milestone. Only sanitised, "
+            "non-identifying achievement metadata can be rendered._"
+        )
+
+    populated = [(label, count) for label, count in _cisco_counts(data) if count]
+    cells = "\n".join(
+        f'<td align="center">&nbsp;<strong>{label}</strong>&nbsp;<br>{count}</td>'
+        for label, count in populated
+    )
+    table = f'<div align="center">\n\n<table>\n<tr>\n{cells}\n</tr>\n</table>\n\n</div>'
+    return header + (
+        f"**Last local data update:** {format_sync_timestamp(data.get('synced_at'))}\n\n"
+        f"{table}\n\n"
+        "_See [TRAINING.md](TRAINING.md#cisco-networking-academy) for complete Cisco "
+        "course, badge, certificate, and skills metadata._"
     )
 
 
-def build_portfolio_stats(rooms: dict, badges: dict, htb_data: dict | None = None) -> str:
+def build_portfolio_stats(
+    rooms: dict,
+    badges: dict,
+    htb_data: dict | None = None,
+    cisco_data: dict | None = None,
+) -> str:
     if htb_data is None:
         htb_data = read_optional_json(HACKTHEBOX, {})
     room_count = len(rooms.get("rooms", []))
@@ -737,6 +785,8 @@ def build_portfolio_stats(rooms: dict, badges: dict, htb_data: dict | None = Non
     htb_machines = len(_htb_list(htb_data, "labs", "machines"))
     htb_sherlocks = len(_htb_list(htb_data, "labs", "sherlocks"))
     htb_total_labs = htb_machines + htb_sherlocks
+    cisco_data, _cisco_state = _validated_cisco_data(cisco_data)
+    cisco_courses = len(cisco_data.get("courses") or [])
 
     writeup_stubs = 0
     writeups_dir = ROOT / "writeups"
@@ -750,6 +800,7 @@ def build_portfolio_stats(rooms: dict, badges: dict, htb_data: dict | None = Non
         f"| TryHackMe Rooms | {room_count} | Completed hands-on training rooms |\n"
         f"| TryHackMe Badges | {badge_count} | Earned achievement badges |\n"
         f"| Hack The Box Labs | {htb_total_labs} | Completed Machines and Sherlocks |\n"
+        f"| Cisco NetAcad Courses | {cisco_courses} | Sanitised course achievement records |\n"
         f"| Practical Write-up Stubs | {writeup_stubs} | Maintained lab notes and template stubs |\n"
         "| Security Projects | 3 | Hardware, embedded systems, and security automation |"
     )
@@ -816,16 +867,70 @@ _Portfolio progress milestones — a personal tracker, not official TryHackMe ba
 {milestones}"""
 
 
-def build_cisco_detailed() -> str:
-    return (
-        "## Cisco Networking Academy\n\n"
-        "Cisco Networking Academy progress has not been added yet. When integrated, "
-        "this section will display course titles, completion status, badges, and completion dates "
-        "without publishing real names or account holder credentials."
+def _cisco_skills(skills) -> str:
+    return ", ".join(md_cell(skill) for skill in skills) if isinstance(skills, list) and skills else "—"
+
+
+def build_cisco_detailed(data: dict | None = None) -> str:
+    data, state = _validated_cisco_data(data)
+    header = "## Cisco Networking Academy\n\n"
+    if state == "unavailable":
+        return header + (
+            "Saved Cisco Networking Academy data is unavailable or failed privacy/schema "
+            "validation. Nothing from that file has been rendered."
+        )
+    if state != "available":
+        return header + (
+            "No Cisco Networking Academy achievements have been imported. The offline "
+            "schema, privacy scrubber, CLI selection, and saved-data renderer are ready; "
+            "interactive browser collection remains the next milestone."
+        )
+
+    parts = [
+        header.rstrip("\n"),
+        "**Last local data update:** " + format_sync_timestamp(data.get("synced_at")),
+    ]
+    courses = data.get("courses") or []
+    if courses:
+        rows = "\n".join(
+            f"| {md_cell(item.get('title'))} | {md_cell((item.get('status') or '').replace('_', ' ').title())} "
+            f"| {md_cell(item.get('completed_at') or '—')} | {_cisco_skills(item.get('skills'))} |"
+            for item in courses
+        )
+        parts.append(
+            "### Courses\n\n"
+            "| Course | Status | Completed | Skills |\n|---|---|---|---|\n" + rows
+        )
+    badges = data.get("badges") or []
+    if badges:
+        rows = "\n".join(
+            f"| {md_cell(item.get('title'))} | {md_cell(item.get('earned_at') or '—')} "
+            f"| {_cisco_skills(item.get('skills'))} |"
+            for item in badges
+        )
+        parts.append("### Badges\n\n| Badge | Earned | Skills |\n|---|---|---|\n" + rows)
+    certificates = data.get("certificates") or []
+    if certificates:
+        rows = "\n".join(
+            f"| {md_cell(item.get('title'))} | {md_cell(item.get('issued_at') or '—')} "
+            f"| {_cisco_skills(item.get('skills'))} |"
+            for item in certificates
+        )
+        parts.append("### Certificates\n\n| Certificate | Issued | Skills |\n|---|---|---|\n" + rows)
+    parts.append(
+        "Sanitised achievement metadata only. Names, email addresses, account and "
+        "certificate IDs, private URLs, cookies, tokens, and browser state are excluded."
     )
+    return "\n\n".join(parts)
 
 
-def render(profile: dict, rooms: dict, badges: dict, htb_data: dict | None = None) -> str:
+def render(
+    profile: dict,
+    rooms: dict,
+    badges: dict,
+    htb_data: dict | None = None,
+    cisco_data: dict | None = None,
+) -> str:
     if htb_data is None:
         htb_data = read_optional_json(HACKTHEBOX, {})
 
@@ -837,23 +942,29 @@ def render(profile: dict, rooms: dict, badges: dict, htb_data: dict | None = Non
         "## Training Platforms\n\n" + "\n\n".join([
             build_tryhackme_summary(profile, rooms, badges),
             build_hackthebox_summary(htb_data),
-            build_cisco_summary(),
+            build_cisco_summary(cisco_data),
         ]),
-        build_portfolio_stats(rooms, badges, htb_data),
+        build_portfolio_stats(rooms, badges, htb_data, cisco_data),
         build_sync_engine_note(),
         build_contact_section(),
     ]
     return GEN_START + "\n" + "\n\n".join(sections) + "\n" + GEN_END
 
 
-def render_training(profile: dict, rooms: dict, badges: dict, htb_data: dict | None = None) -> str:
+def render_training(
+    profile: dict,
+    rooms: dict,
+    badges: dict,
+    htb_data: dict | None = None,
+    cisco_data: dict | None = None,
+) -> str:
     if htb_data is None:
         htb_data = read_optional_json(HACKTHEBOX, {})
 
     sections = [
         build_tryhackme_detailed(profile, rooms, badges),
         build_hackthebox_section(htb_data),
-        build_cisco_detailed(),
+        build_cisco_detailed(cisco_data),
     ]
     return TRAINING_START + "\n" + "\n\n".join(sections) + "\n" + TRAINING_END
 
@@ -1049,7 +1160,7 @@ def add_room(args):
 # Cybersecurity Portfolio Sync Engine
 # --------------------------------------------------------------------------- #
 
-PLATFORM_KEYS = ("tryhackme", "hackthebox")
+PLATFORM_KEYS = ("tryhackme", "hackthebox", "cisco")
 
 # Files the automated commit flow is ever allowed to stage. Browser profiles,
 # diagnostics, caches and temp files are deliberately excluded.
@@ -1057,7 +1168,9 @@ PUBLISH_ALLOWLIST = ("README.md", "TRAINING.md", "docs", "data", "writeups")
 
 # Patterns that must never appear inside tracked data files.
 FORBIDDEN_DATA_PATTERNS = re.compile(
-    r"password|passwd|bearer|authorization|session[_-]?id|flag\{|htb\{|thm\{|user\.txt|root\.txt|-----BEGIN",
+    r"password|passwd|bearer|authorization|session[_-]?id|access[_-]?token|refresh[_-]?token|"
+    r"cookie|\"(?:email|account[_-]?id|user[_-]?id|certificate[_-]?id|private[_-]?url)\"\s*:|"
+    r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}|flag\{|htb\{|thm\{|user\.txt|root\.txt|-----BEGIN",
     re.IGNORECASE,
 )
 
@@ -1078,8 +1191,9 @@ def regenerate_readme() -> None:
     rooms = read_json(ROOMS, {"rooms": []})
     badges = read_json(BADGES, {"badges": []})
     htb_data = read_optional_json(HACKTHEBOX, {})
-    update_readme(render(profile, rooms, badges, htb_data))
-    update_training_md(render_training(profile, rooms, badges, htb_data))
+    cisco_data = read_optional_json(CISCO_NETACAD, None)
+    update_readme(render(profile, rooms, badges, htb_data, cisco_data))
+    update_training_md(render_training(profile, rooms, badges, htb_data, cisco_data))
 
 
 def sync_tryhackme_platform() -> PlatformOutcome:
@@ -1114,6 +1228,16 @@ def sync_hackthebox_platform(interactive: bool) -> PlatformOutcome:
     return PlatformOutcome("Hack The Box", result.ok, result.message, result.counts)
 
 
+def sync_cisco_platform(interactive: bool) -> PlatformOutcome:
+    """Run Cisco through its isolated module (offline foundation for now)."""
+    try:
+        from platforms import cisco_netacad
+    except ImportError as exc:
+        return PlatformOutcome("Cisco Networking Academy", False, f"Cisco module unavailable: {exc}")
+    result = cisco_netacad.sync(interactive=interactive)
+    return PlatformOutcome("Cisco Networking Academy", result.ok, result.message, result.counts)
+
+
 def _git_paths_staged() -> list[str]:
     out = run_git("diff", "--cached", "--name-only", check=False)
     return [line for line in out.stdout.splitlines() if line.strip()]
@@ -1124,7 +1248,7 @@ def _privacy_and_safety_checks() -> list[str]:
     problems = []
     staged = _git_paths_staged()
     for path in staged:
-        if re.search(r"(^|/)\.(thm|htb)-browser(/|$)", path) or ".htb-diagnostics" in path \
+        if re.search(r"(^|/)\.(thm|htb|cisco)-browser(/|$)", path) or ".htb-diagnostics" in path \
                 or ".htb-sync-cache" in path or path.endswith(".tmp"):
             problems.append(f"refusing to stage local artefact: {path}")
     # Scan staged data files for forbidden content.
@@ -1202,6 +1326,8 @@ def run_sync(requested: list[str], interactive: bool, auto_push: bool) -> int:
             outcomes.append(sync_tryhackme_platform())
         elif platform == "hackthebox":
             outcomes.append(sync_hackthebox_platform(interactive))
+        elif platform == "cisco":
+            outcomes.append(sync_cisco_platform(interactive))
 
     # Always regenerate from whatever valid saved data now exists.
     try:
@@ -1227,19 +1353,21 @@ def interactive_menu() -> int:
         "\nCybersecurity Portfolio Sync\n"
         "1. TryHackMe\n"
         "2. Hack The Box\n"
-        "3. Both platforms\n"
-        "4. Regenerate from saved data\n"
-        "5. Exit\n"
+        "3. Cisco Networking Academy\n"
+        "4. All platforms\n"
+        "5. Regenerate from saved data\n"
+        "6. Exit\n"
     )
     mapping = {
         "1": ["tryhackme"],
         "2": ["hackthebox"],
-        "3": ["tryhackme", "hackthebox"],
+        "3": ["cisco"],
+        "4": list(PLATFORM_KEYS),
     }
     while True:
         print(menu)
         try:
-            choice = input("Select an option [1-5]: ").strip()
+            choice = input("Select an option [1-6]: ").strip()
         except (EOFError, KeyboardInterrupt):
             print("\nCancelled.")
             return 0
@@ -1247,7 +1375,7 @@ def interactive_menu() -> int:
             requested = mapping[choice]
             print(f"\nSelected: {', '.join(requested)}. A browser may open for login.")
             return run_sync(requested, interactive=True, auto_push=False)
-        if choice == "4":
+        if choice == "5":
             try:
                 regenerate_readme()
                 print("README regenerated from saved data.")
@@ -1257,10 +1385,10 @@ def interactive_menu() -> int:
             if _confirm("Commit and push the regenerated README? [y/N] "):
                 publish_changes("Regenerate portfolio README")
             return 0
-        if choice == "5":
+        if choice == "6":
             print("Exiting.")
             return 0
-        print("Invalid selection. Please choose a number from 1 to 5.")
+        print("Invalid selection. Please choose a number from 1 to 6.")
 
 
 def cmd_sync(args) -> int:
@@ -1286,7 +1414,7 @@ def main():
     sub = parser.add_subparsers(dest="command", required=True)
 
     sync_parser = sub.add_parser("sync", help="interactive multi-platform sync menu")
-    sync_parser.add_argument("--platform", choices=("tryhackme", "hackthebox", "all"),
+    sync_parser.add_argument("--platform", choices=("tryhackme", "hackthebox", "cisco", "all"),
                              help="run a specific platform non-interactively (skips the menu)")
     sync_parser.add_argument("--non-interactive", action="store_true",
                              help="do not treat this as an interactive session")

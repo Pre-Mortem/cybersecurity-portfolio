@@ -20,14 +20,20 @@ Each platform maintains an isolated, persistent browser profile directory locate
 
 - **TryHackMe**: `.thm-browser/`
 - **Hack The Box**: `.htb-browser/`
+- **Cisco Networking Academy**: `.cisco-browser/` (reserved; live collection not yet implemented)
 
 ### How Authentication Works
 
-1. **Interactive Session**: When running a sync task (e.g. `./sync-portfolio` or `python3 portfolio.py sync`), Playwright opens a standard browser instance using the designated profile path.
+1. **Interactive Session**: For implemented collectors, running a sync task (e.g. `./sync-portfolio` or `python3 portfolio.py sync`) opens a standard browser instance using the designated profile path.
 2. **User Sign-In**: If the session has expired or is unauthenticated, the user signs in manually (completing 2FA/SSO in the browser window).
 3. **Session Persistence**: Cookies and session state remain stored locally within `.thm-browser/` or `.htb-browser/`.
 4. **Data Extraction**: Once authenticated, the engine extracts public achievement metadata directly from authenticated page loads or response payloads.
-5. **Session Cleanup**: Closing or resetting a session is as simple as deleting `.thm-browser/` or `.htb-browser/`.
+5. **Session Cleanup**: Closing or resetting a session is as simple as deleting the relevant ignored browser profile.
+
+The Cisco platform currently stops before these authentication steps and reports
+that browser extraction is not implemented. A later collector will require the
+user to complete any Cisco SSO or MFA manually; credentials and authentication
+state must remain entirely inside `.cisco-browser/`.
 
 ---
 
@@ -38,6 +44,7 @@ All browser session directories are strictly ignored by `.gitignore`:
 ```gitignore
 .thm-browser/
 .htb-browser/
+.cisco-browser/
 .htb-diagnostics/
 .htb-sync-cache/
 *.tmp

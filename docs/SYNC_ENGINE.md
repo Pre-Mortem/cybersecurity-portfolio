@@ -12,13 +12,14 @@ The sync engine separates data extraction, authentication, validation, and rende
 portfolio.py (CLI & Orchestrator)
  ├── platforms/
  │    ├── base.py       (Platform sync interface & schema validators)
- │    └── hackthebox.py (HTB Playwright collector & parser)
+ │    ├── hackthebox.py (HTB Playwright collector & parser)
+ │    └── cisco_netacad.py (Cisco offline schema, scrubber & persistence boundary)
  ├── room_sync.py       (TryHackMe rooms collector)
  ├── badge_sync.py      (TryHackMe badges collector)
  └── room_difficulty_sync.py (TryHackMe difficulty collector)
 ```
 
-- **Data Storage**: Collected evidence is stored in versioned JSON files under `data/` (`rooms.json`, `badges.json`, `profile.json`, `hackthebox.json`, `evidence.json`).
+- **Data Storage**: Collected evidence is stored in versioned JSON files under `data/` (`rooms.json`, `badges.json`, `profile.json`, `hackthebox.json`, `cisco_netacad.json`, `evidence.json`).
 - **Rendering Engine**: `portfolio.py` parses saved JSON data and populates bounded comment markers in `README.md` (compact summary) and `TRAINING.md` (detailed platform history).
 
 ---
@@ -33,8 +34,10 @@ portfolio.py (CLI & Orchestrator)
    - Synced data: Labs (Machines, Sherlocks, Challenges, Badges, Rank) and Academy (Modules, Paths, Certifications).
    - Mechanism: Authenticated Playwright browser session (`.htb-browser/`) intercepting web app JSON payloads.
 
-3. **Cisco Networking Academy** (Roadmap)
-   - Planned support for course completions, badges, and certificates with strict public identity protection.
+3. **Cisco Networking Academy** (Offline foundation)
+   - Implemented: schema v1, identity scrubbing, atomic persistence, CLI selection, and saved-data rendering for courses, badges, certificates, dates, and skills.
+   - Not implemented: live browser extraction or successful authenticated sync.
+   - The reserved `.cisco-browser/` profile will support a later interactive login flow. No endpoint has been guessed or hard-coded.
 
 ---
 
@@ -53,9 +56,10 @@ python3 portfolio.py sync
 The menu options include:
 1. **TryHackMe** — Sync TryHackMe rooms, difficulty, and badges.
 2. **Hack The Box** — Sync HTB Labs and Academy activity.
-3. **Both platforms** — Sequential sync across all supported platforms.
-4. **Regenerate from saved data** — Re-render `README.md` and `TRAINING.md` using existing local JSON data.
-5. **Exit**
+3. **Cisco Networking Academy** — Report the current offline-only collector state and preserve saved data.
+4. **All platforms** — Sequential sync with per-platform failure isolation.
+5. **Regenerate from saved data** — Re-render `README.md` and `TRAINING.md` using existing local JSON data.
+6. **Exit**
 
 ### Non-Interactive & Automation Commands
 
@@ -63,6 +67,7 @@ The menu options include:
 # Sync specific platform non-interactively
 python3 portfolio.py sync --platform tryhackme --non-interactive
 python3 portfolio.py sync --platform hackthebox --non-interactive
+python3 portfolio.py sync --platform cisco --non-interactive
 python3 portfolio.py sync --platform all --non-interactive
 
 # Re-render README and TRAINING.md without connecting to platforms
@@ -83,4 +88,10 @@ The sync engine enforces an explicit staging allow-list (`PUBLISH_ALLOWLIST`):
 - `data/`
 - `writeups/`
 
-Browser session profiles (`.thm-browser/`, `.htb-browser/`), diagnostic dumps, temporary files, and raw response logs are strictly excluded from Git tracking via `.gitignore` and pre-commit checks.
+Browser session profiles (`.thm-browser/`, `.htb-browser/`, `.cisco-browser/`),
+diagnostic dumps, temporary files, and raw response logs are strictly excluded
+from Git tracking via `.gitignore` and pre-commit checks.
+
+Each platform returns an independent outcome. Rendering always uses the valid
+saved snapshots that remain on disk, so a Cisco failure cannot erase or replace
+TryHackMe or Hack The Box data.

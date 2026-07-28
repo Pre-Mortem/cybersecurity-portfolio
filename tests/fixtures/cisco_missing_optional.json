@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "platform": "cisco_netacad",
+  "synced_at": "2026-07-01T12:00:00+00:00",
+  "collection_status": "available",
+  "courses": [
+    {
+      "title": "Fixture Introductory Course",
+      "status": "in_progress"
+    }
+  ],
+  "badges": [],
+  "certificates": []
+}

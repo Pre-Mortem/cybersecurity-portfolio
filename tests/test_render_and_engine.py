@@ -14,6 +14,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import portfolio  # noqa: E402
 from platforms import hackthebox as htb  # noqa: E402
+from platforms import cisco_netacad as cisco  # noqa: E402
+
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
 
 def _sample_htb():
@@ -62,6 +65,44 @@ class TestHtbRenderer(unittest.TestCase):
         self.assertIn("&lt;", out)
 
 
+class TestCiscoRenderer(unittest.TestCase):
+    def test_empty_state(self):
+        summary = portfolio.build_cisco_summary(cisco.empty_schema())
+        detail = portfolio.build_cisco_detailed(cisco.empty_schema())
+        self.assertIn("foundation ready", summary)
+        self.assertIn("No Cisco Networking Academy achievements", detail)
+        self.assertNotIn("<table>", detail)
+
+    def test_unavailable_and_malformed_states(self):
+        unavailable = portfolio.build_cisco_detailed(cisco.empty_schema("unavailable"))
+        malformed = portfolio.build_cisco_summary(
+            json.loads((FIXTURES / "cisco_malformed.json").read_text(encoding="utf-8"))
+        )
+        self.assertIn("unavailable", unavailable)
+        self.assertIn("failed validation", malformed)
+        self.assertNotIn("unexpected_identity", malformed)
+
+    def test_populated_fixture(self):
+        data = json.loads((FIXTURES / "cisco_valid.json").read_text(encoding="utf-8"))
+        summary = portfolio.build_cisco_summary(data)
+        detail = portfolio.build_cisco_detailed(data)
+        self.assertIn("<strong>Courses</strong>", summary)
+        self.assertIn("Fixture Networking Basics", detail)
+        self.assertIn("Fixture Network Learner", detail)
+        self.assertIn("Fixture Course Certificate", detail)
+        self.assertIn("Network fundamentals, Troubleshooting", detail)
+        self.assertNotIn("Profile:", summary)
+
+    def test_missing_optional_fields_fixture(self):
+        data = json.loads(
+            (FIXTURES / "cisco_missing_optional.json").read_text(encoding="utf-8")
+        )
+        detail = portfolio.build_cisco_detailed(data)
+        self.assertIn("Fixture Introductory Course", detail)
+        self.assertIn("In Progress", detail)
+        self.assertIn("| — | — |", detail)
+
+
 class TestIdempotentRender(unittest.TestCase):
     def test_render_twice_identical(self):
         profile = portfolio.read_json(portfolio.PROFILE, {})
@@ -73,14 +114,55 @@ class TestIdempotentRender(unittest.TestCase):
         self.assertIn(portfolio.GEN_START, a)
         self.assertIn(portfolio.START, a)  # THM markers nested inside
 
+    def test_marker_updates_are_stable_and_preserve_authored_content(self):
+        profile = portfolio.read_json(portfolio.PROFILE, {})
+        rooms = portfolio.read_json(portfolio.ROOMS, {"rooms": []})
+        badges = portfolio.read_json(portfolio.BADGES, {"badges": []})
+        htb_data = portfolio.read_optional_json(portfolio.HACKTHEBOX, {})
+        cisco_data = cisco.empty_schema()
+        readme_section = portfolio.render(profile, rooms, badges, htb_data, cisco_data)
+        training_section = portfolio.render_training(profile, rooms, badges, htb_data, cisco_data)
+
+        with tempfile.TemporaryDirectory() as directory:
+            readme = Path(directory) / "README.md"
+            training = Path(directory) / "TRAINING.md"
+            readme.write_text(
+                "Recruiter-authored introduction.\n\n"
+                f"{portfolio.GEN_START}\nold generated content\n{portfolio.GEN_END}\n\n"
+                "Recruiter-authored closing.\n",
+                encoding="utf-8",
+            )
+            training.write_text(
+                "Training-authored introduction.\n\n"
+                f"{portfolio.TRAINING_START}\nold generated content\n{portfolio.TRAINING_END}\n\n"
+                "Training-authored closing.\n",
+                encoding="utf-8",
+            )
+            with mock.patch.object(portfolio, "README", readme), \
+                 mock.patch.object(portfolio, "TRAINING_MD", training):
+                portfolio.update_readme(readme_section)
+                portfolio.update_training_md(training_section)
+                first = (readme.read_text(encoding="utf-8"),
+                         training.read_text(encoding="utf-8"))
+                portfolio.update_readme(readme_section)
+                portfolio.update_training_md(training_section)
+                second = (readme.read_text(encoding="utf-8"),
+                          training.read_text(encoding="utf-8"))
+
+            self.assertEqual(first, second)
+            self.assertTrue(first[0].startswith("Recruiter-authored introduction."))
+            self.assertTrue(first[0].endswith("Recruiter-authored closing.\n"))
+            self.assertTrue(first[1].startswith("Training-authored introduction."))
+            self.assertTrue(first[1].endswith("Training-authored closing.\n"))
+
 
 class TestInteractiveMenu(unittest.TestCase):
     def test_exit_option(self):
-        with mock.patch("builtins.input", return_value="5"):
+        with mock.patch("builtins.input", return_value="6"):
             self.assertEqual(portfolio.interactive_menu(), 0)
 
     def test_invalid_then_exit(self):
-        with mock.patch("builtins.input", side_effect=["9", "abc", "5"]):
+        with mock.patch("builtins.input", side_effect=["9", "abc", "6"]):
             self.assertEqual(portfolio.interactive_menu(), 0)
 
     def test_keyboard_interrupt_clean(self):
@@ -88,14 +170,14 @@ class TestInteractiveMenu(unittest.TestCase):
             self.assertEqual(portfolio.interactive_menu(), 0)
 
     def test_selection_dispatches(self):
-        with mock.patch("builtins.input", return_value="3"), \
+        with mock.patch("builtins.input", return_value="4"), \
              mock.patch.object(portfolio, "run_sync", return_value=0) as run:
             portfolio.interactive_menu()
             run.assert_called_once()
-            self.assertEqual(run.call_args.args[0], ["tryhackme", "hackthebox"])
+            self.assertEqual(run.call_args.args[0], ["tryhackme", "hackthebox", "cisco"])
 
     def test_regenerate_option(self):
-        with mock.patch("builtins.input", side_effect=["4", "n"]), \
+        with mock.patch("builtins.input", side_effect=["5", "n"]), \
              mock.patch.object(portfolio, "regenerate_readme") as regen:
             self.assertEqual(portfolio.interactive_menu(), 0)
             regen.assert_called_once()
@@ -110,10 +192,11 @@ class TestNonInteractiveCli(unittest.TestCase):
 
     def test_platform_all(self):
         call = self._run("all")
-        self.assertEqual(call.args[0], ["tryhackme", "hackthebox"])
+        self.assertEqual(call.args[0], ["tryhackme", "hackthebox", "cisco"])
 
     def test_platform_single(self):
         self.assertEqual(self._run("hackthebox").args[0], ["hackthebox"])
+        self.assertEqual(self._run("cisco").args[0], ["cisco"])
 
 
 class TestRunSyncOutcomes(unittest.TestCase):
@@ -142,6 +225,16 @@ class TestRunSyncOutcomes(unittest.TestCase):
             rc = portfolio.run_sync(["hackthebox"], interactive=False, auto_push=False)
         self.assertEqual(rc, 1)
 
+    def test_partial_cisco_failure_is_isolated(self):
+        ok = portfolio.PlatformOutcome("TryHackMe", True, "ok", {"rooms": 16})
+        bad = portfolio.PlatformOutcome("Cisco Networking Academy", False, "not implemented")
+        with mock.patch.object(portfolio, "sync_tryhackme_platform", return_value=ok), \
+             mock.patch.object(portfolio, "sync_cisco_platform", return_value=bad), \
+             mock.patch.object(portfolio, "regenerate_readme"), \
+             mock.patch.object(portfolio, "run_git", return_value=SimpleNamespace(stdout="")):
+            rc = portfolio.run_sync(["tryhackme", "cisco"], interactive=False, auto_push=False)
+        self.assertEqual(rc, 0)
+
 
 class TestPublishSafety(unittest.TestCase):
     def test_allowlist_constant(self):
@@ -149,9 +242,11 @@ class TestPublishSafety(unittest.TestCase):
 
     def test_private_artefact_rejected(self):
         with mock.patch.object(portfolio, "_git_paths_staged",
-                               return_value=[".htb-browser/Default/Cookies", "README.md"]):
+                               return_value=[".htb-browser/Default/Cookies",
+                                             ".cisco-browser/Default/Cookies", "README.md"]):
             problems = portfolio._privacy_and_safety_checks()
         self.assertTrue(any(".htb-browser" in p for p in problems))
+        self.assertTrue(any(".cisco-browser" in p for p in problems))
 
     def test_diagnostics_and_tmp_rejected(self):
         with mock.patch.object(portfolio, "_git_paths_staged",

@@ -124,5 +124,5 @@ Hack The Box progress has not been added yet. This section will track Machines, 
 
 ## Cisco Networking Academy
 
-Cisco Networking Academy progress has not been added yet. When integrated, this section will display course titles, completion status, badges, and completion dates without publishing real names or account holder credentials.
+No Cisco Networking Academy achievements have been imported. The offline schema, privacy scrubber, CLI selection, and saved-data renderer are ready; interactive browser collection remains the next milestone.
 <!-- TRAINING:END -->

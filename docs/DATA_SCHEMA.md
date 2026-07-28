@@ -99,7 +99,52 @@ Stores Hack The Box Labs, Academy, Certifications, and identity.
 
 ---
 
-## 5. `data/evidence.json` (Custom Evidence Manifest)
+## 5. `data/cisco_netacad.json` (Cisco Networking Academy Schema v1)
+
+Stores only sanitised Cisco achievement metadata. There is intentionally no
+identity object and no field for names, emails, account IDs, certificate IDs,
+URLs, cookies, tokens, or session state.
+
+```json
+{
+  "schema_version": 1,
+  "platform": "cisco_netacad",
+  "synced_at": "2026-07-01T12:00:00+00:00",
+  "collection_status": "available",
+  "courses": [
+    {
+      "title": "Example Course Title",
+      "status": "completed",
+      "completed_at": "2026-06-30",
+      "skills": ["Network fundamentals"]
+    }
+  ],
+  "badges": [
+    {
+      "title": "Example Badge Title",
+      "earned_at": "2026-06-30",
+      "skills": ["Networking"]
+    }
+  ],
+  "certificates": [
+    {
+      "title": "Example Certificate Title",
+      "issued_at": "2026-06-30",
+      "skills": ["Troubleshooting"]
+    }
+  ]
+}
+```
+
+`collection_status` is one of `not_collected`, `available`, or `unavailable`.
+Course `status` is `completed` or `in_progress`. Dates and skill lists are
+optional. Unknown root or record fields fail validation; unsafe fields supplied
+to the normaliser are discarded before persistence. Live browser collection is
+not part of schema v1's current implementation.
+
+---
+
+## 6. `data/evidence.json` (Custom Evidence Manifest)
 
 Optional manifest for linking additional verified reports, certificates, or lab evidence.
 

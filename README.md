@@ -84,8 +84,8 @@ Hack The Box integration is active. No completed labs recorded yet. See [TRAININ
 
 ### Cisco Networking Academy Summary
 
-**Status:** Integration planned (Roadmap item)<br>
-_Public identity protection enabled by default. Only non-identifying achievement details (course title, completion status, date, badge, skills) will be published. See [docs/ROADMAP.md](docs/ROADMAP.md) for details._
+**Status:** Offline integration foundation ready; no achievements imported.<br>
+_Live browser extraction remains a future milestone. Only sanitised, non-identifying achievement metadata can be rendered._
 
 ## Portfolio Statistics
 
@@ -94,6 +94,7 @@ _Public identity protection enabled by default. Only non-identifying achievement
 | TryHackMe Rooms | 16 | Completed hands-on training rooms |
 | TryHackMe Badges | 6 | Earned achievement badges |
 | Hack The Box Labs | 0 | Completed Machines and Sherlocks |
+| Cisco NetAcad Courses | 0 | Sanitised course achievement records |
 | Practical Write-up Stubs | 16 | Maintained lab notes and template stubs |
 | Security Projects | 3 | Hardware, embedded systems, and security automation |
 

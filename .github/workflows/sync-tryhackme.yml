@@ -25,7 +25,8 @@ jobs:
             room_difficulty_sync.py \
             platforms/__init__.py \
             platforms/base.py \
-            platforms/hackthebox.py
+            platforms/hackthebox.py \
+            platforms/cisco_netacad.py
       - name: Run deterministic tests
         # These tests never require a live account, browser or interactive login.
         run: python -m unittest discover -s tests
@@ -37,9 +38,21 @@ jobs:
           for path in sorted(Path("data").glob("*.json")):
               json.loads(path.read_text(encoding="utf-8"))
               print(f"valid: {path}")
+
+          from platforms import cisco_netacad, hackthebox
+          validators = {
+              Path("data/hackthebox.json"): hackthebox.validate_data,
+              Path("data/cisco_netacad.json"): cisco_netacad.validate_data,
+          }
+          for path, validate in validators.items():
+              errors = validate(json.loads(path.read_text(encoding="utf-8")))
+              if errors:
+                  raise SystemExit(f"schema errors in {path}: {errors}")
+              print(f"schema valid: {path}")
           PY
       - name: Check private browser state is ignored
         run: |
           git check-ignore .thm-browser/test-cookie
           git check-ignore .htb-browser/test-cookie
+          git check-ignore .cisco-browser/test-cookie
           git check-ignore .htb-diagnostics/test.png

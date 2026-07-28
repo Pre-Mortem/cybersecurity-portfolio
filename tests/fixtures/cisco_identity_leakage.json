@@ -1,0 +1,35 @@
+{
+  "full_name": "REDACT-ME",
+  "email": "learner@example.invalid",
+  "account_id": "account-fixture-123",
+  "session_token": "token-fixture-456",
+  "courses": [
+    {
+      "title": "Fixture Safe Course",
+      "status": "completed",
+      "email": "learner@example.invalid",
+      "private_url": "https://example.invalid/private/account-fixture-123",
+      "skills": [
+        "Networking",
+        "learner@example.invalid"
+      ]
+    },
+    {
+      "title": "Fixture Course for REDACT-ME",
+      "status": "completed"
+    }
+  ],
+  "badges": [
+    {
+      "title": "https://example.invalid/private-badge",
+      "earned_at": "2026-06-30"
+    }
+  ],
+  "certificates": [
+    {
+      "title": "Fixture Safe Certificate",
+      "issued_at": "2026-06-30",
+      "certificate_id": "certificate-fixture-789"
+    }
+  ]
+}
