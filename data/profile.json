@@ -1,7 +1,7 @@
 {
-  "last_sync": "2026-07-23T11:44:41+00:00",
+  "last_sync": "2026-07-28T14:35:58+00:00",
   "profile_card_path": "assets/tryhackme/public-profile.png",
   "username": "PreMortem",
   "profile_url": "https://tryhackme.com/p/PreMortem",
-  "sync_method": "isolated-authenticated-browser"
+  "sync_method": "authenticated-completed-rooms-api"
 }

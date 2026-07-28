@@ -106,8 +106,23 @@ Alongside formal study, I am building practical evidence through TryHackMe labs 
 
 ## Practical Training Snapshot
 
-- **TryHackMe:** 16 completed rooms and 6 earned badges.
+- **TryHackMe:** 27 completed rooms and 6 earned badges.
 - **Current lab focus:** networking fundamentals, Linux fundamentals, web security.
+
+### Recent Completed Rooms
+
+| Room | Difficulty | Completed |
+|---|---|---|
+| [Introductory Researching](https://tryhackme.com/room/introtoresearch) | Easy | 2026-07-28 |
+| [Starting Out In Cyber Sec](https://tryhackme.com/room/startingoutincybersec) | Easy | 2026-07-28 |
+| [Linux Fundamentals Part 2](https://tryhackme.com/room/linuxfundamentalspart2) | Info | 2026-07-28 |
+| [How Websites Work](https://tryhackme.com/room/howwebsiteswork) | Easy | 2026-07-28 |
+| [Linux Fundamentals Part 3](https://tryhackme.com/room/linuxfundamentalspart3) | Info | 2026-07-28 |
+| [HTTP in Detail](https://tryhackme.com/room/httpindetail) | Easy | 2026-07-28 |
+| [OSI Model](https://tryhackme.com/room/osimodelzi) | Info | 2026-07-28 |
+| [Packets &amp; Frames](https://tryhackme.com/room/packetsframes) | Info | 2026-07-28 |
+| [Extending Your Network](https://tryhackme.com/room/extendingyournetwork) | Info | 2026-07-28 |
+| [Malware Classification](https://tryhackme.com/room/malwareclassification) | Easy | 2026-07-28 |
 
 See [TRAINING.md](TRAINING.md) for the complete room history, badges, completion dates, milestones, and platform-specific evidence.
 

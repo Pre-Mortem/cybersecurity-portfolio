@@ -7,6 +7,8 @@ This document outlines completed milestones and future enhancements for the **Pr
 ## Milestone 1 — TryHackMe Integration & Base Portfolio (Completed)
 - [x] Initial portfolio layout and markdown template structure.
 - [x] Automated TryHackMe completed rooms collector (`room_sync.py`).
+- [x] Paginated completed-room API collection with account-total validation,
+  stable-code deduplication, and preserve-on-partial-result safety.
 - [x] TryHackMe room difficulty fetcher (`room_difficulty_sync.py`).
 - [x] TryHackMe badge scraper & showcase table generator (`badge_sync.py`).
 - [x] Bounded comment markers for safe in-place README updates.

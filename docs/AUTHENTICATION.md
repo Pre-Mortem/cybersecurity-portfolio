@@ -27,7 +27,13 @@ Each platform maintains an isolated, persistent browser profile directory locate
 1. **Interactive Session**: For implemented collectors, running a sync task (e.g. `./sync-portfolio` or `python3 portfolio.py sync`) opens a standard browser instance using the designated profile path.
 2. **User Sign-In**: If the session has expired or is unauthenticated, the user signs in manually (completing 2FA/SSO in the browser window).
 3. **Session Persistence**: Cookies and session state remain stored locally within `.thm-browser/` or `.htb-browser/`.
-4. **Data Extraction**: Once authenticated, the engine extracts public achievement metadata directly from authenticated page loads or response payloads.
+4. **Data Extraction**: Once authenticated, the engine extracts public
+   achievement metadata directly from authenticated page loads or response
+   payloads. The TryHackMe collector verifies the public account name using
+   `/api/v2/users/self`, reads only the completed-room projection from the
+   paginated public-profile endpoint, and compares its total with
+   `/api/v2/users/statistics`. Private fields returned by the authentication
+   check are neither logged nor persisted.
 5. **Session Cleanup**: Closing or resetting a session is as simple as deleting the relevant ignored browser profile.
 
 The Cisco platform currently stops before these authentication steps and reports

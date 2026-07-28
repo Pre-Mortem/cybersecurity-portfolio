@@ -34,7 +34,19 @@ portfolio.py (CLI & Orchestrator)
 
 1. **TryHackMe**
    - Synced data: Completed rooms, difficulty levels, completion dates, badges, profile metrics.
-   - Mechanism: Authenticated Playwright browser session (`.thm-browser/`) and validated API endpoints.
+   - Mechanism: Authenticated Playwright browser session (`.thm-browser/`) and
+     the profile's paginated
+     `/api/v2/public-profile/completed-rooms` response. Every `nextPage` is
+     followed, stable room codes are deduplicated, and the final unique count
+     must match both the API pagination total and authenticated account
+     statistics before anything is saved.
+   - Failure safety: zero, partial, malformed, looping, or internally
+     inconsistent results are collection failures. Existing rooms,
+     `last_sync`, `README.md`, and `TRAINING.md` remain unchanged.
+   - Completion dates: genuine API timestamps are preferred. The current
+     completed-room response does not expose timestamps, so newly discovered
+     records use the local sync date only as an explicitly labelled
+     `sync-date-fallback`.
 
 2. **Hack The Box**
    - Synced data: Labs (Machines, Sherlocks, Challenges, Badges, Rank) and Academy (Modules, Paths, Certifications).
