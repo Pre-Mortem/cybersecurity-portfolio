@@ -125,9 +125,9 @@ def build_badge_showcase(badges: list) -> str:
     """
     cells = []
     for badge in badges:
-        name = html.escape(str(badge.get("name") or "Badge"))
-        image = str(badge.get("image") or "").strip()
-        if image.lower().startswith(("http://", "https://")):
+        name = html.escape(safe_public_text(badge.get("name"), "Badge"))
+        image = tryhackme_badge_image_url(badge.get("image"))
+        if image:
             src = html.escape(image, quote=True)
             inner = f'<img src="{src}" alt="{name}" width="100"><br>\n<strong>{name}</strong>'
         else:
@@ -245,6 +245,50 @@ def safe_url(url) -> str | None:
     return None
 
 
+PRIVATE_TEXT_PATTERN = re.compile(
+    r"(?i)(?:"
+    r"/users/[^/\s]+|"
+    r"/home/[^/\s]+|"
+    r"[a-z]:\\users\\[^\\\s]+|"
+    r"[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9.-]+\.[a-z]{2,}"
+    r")"
+)
+
+
+def safe_public_text(value, fallback: str = "") -> str:
+    """Return display text only when it does not resemble private identity data."""
+    text = str(value or "").strip()
+    if not text or PRIVATE_TEXT_PATTERN.search(text):
+        return fallback
+    return text
+
+
+def tryhackme_room_url(value) -> str | None:
+    """Accept only canonical public TryHackMe room links."""
+    url = safe_url(value)
+    if not url:
+        return None
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or parsed.netloc.lower() != "tryhackme.com":
+        return None
+    if not parsed.path.startswith("/room/") or parsed.query or parsed.fragment:
+        return None
+    return url
+
+
+def tryhackme_badge_image_url(value) -> str | None:
+    """Accept only canonical public TryHackMe badge asset links."""
+    url = safe_url(value)
+    if not url:
+        return None
+    parsed = urlparse(url)
+    if parsed.scheme != "https" or parsed.netloc.lower() != "assets.tryhackme.com":
+        return None
+    if not parsed.path.startswith("/img/badges/") or parsed.query or parsed.fragment:
+        return None
+    return url
+
+
 def md_cell(value) -> str:
     """Escape a value for safe use inside a Markdown table cell."""
     return html.escape(str(value)).replace("|", "\\|").replace("\n", " ")
@@ -265,9 +309,12 @@ QUALIFICATIONS = [
 def build_qualification_section() -> str:
     qualification = QUALIFICATIONS[0]
     return (
-        "## Current Qualifications and Training\n\n"
-        f"**{md_cell(qualification['title'])}**<br>\n"
-        f"{md_cell(qualification['provider'])} · {md_cell(qualification['status'])}\n\n"
+        "## Qualifications\n\n"
+        "| Qualification | Reference | Provider | Status |\n"
+        "|---|---|---|---|\n"
+        f"| {md_cell(qualification['title'])} | {md_cell(qualification['reference'])} "
+        f"| {md_cell(qualification['provider'])} "
+        f"| {md_cell(qualification['status'])} |\n\n"
         "Alongside formal study, I am building practical evidence through TryHackMe "
         "labs and project-based development, while preparing to expand the record "
         "through Hack The Box and Cisco Networking Academy."
@@ -349,14 +396,16 @@ def _rooms_matching(rooms: dict, keywords) -> list:
     for room in rooms.get("rooms", []):
         low = str(room.get("name", "")).lower()
         if any(keyword in low for keyword in keywords):
-            names.append(room.get("name", ""))
+            name = safe_public_text(room.get("name"))
+            if name:
+                names.append(name)
     return names
 
 
 def _badge_name(badges: dict, code: str) -> str:
     for badge in badges.get("badges", []):
         if badge.get("code") == code:
-            return str(badge.get("name") or "")
+            return safe_public_text(badge.get("name"))
     return ""
 
 
@@ -385,16 +434,20 @@ def build_skills_section(rooms: dict, badges: dict) -> str:
     # Skills whose evidence is project/tooling based (verified in-repo or above).
     matrix.extend([
         ("Python",
-         "Portfolio generation and synchronisation scripts "
-         "(portfolio.py, badge_sync.py, room_sync.py, room_difficulty_sync.py)"),
+         "Portfolio automation, platform adapters, rendering, schema validation, "
+         "privacy checks, and deterministic test tooling"),
         ("Git and GitHub",
-         "Version-controlled, automatically generated portfolio with JSON data validated in CI"),
+         "Version control, focused branches, GitHub Actions validation, and reproducible history"),
         ("Embedded systems",
-         "ESP32-S2 AI HID Typer and PacketPunch development"),
+         "PacketPunch and ESP32-S2 AI HID Typer development"),
         ("Android",
-         "Developing through the ESP32-S2 AI HID Typer Android client"),
+         "ESP32-S2 AI HID Typer companion application"),
         ("Security automation",
-         "Automated TryHackMe room, badge and difficulty synchronisation"),
+         "TryHackMe and Hack The Box evidence collection plus Cisco offline "
+         "sanitisation and rendering foundation"),
+        ("Privacy and safe design",
+         "Credential checks, isolated browser state, payload limits, sanitisation, "
+         "and failure-safe persistence"),
     ])
 
     rows = "\n".join(f"| {md_cell(label)} | {md_cell(evidence)} |" for label, evidence in matrix)
@@ -456,6 +509,7 @@ def _evidence_link(title: str, target: str) -> str:
 
 def build_evidence_section() -> str:
     completed_items = []
+    draft_items = []
 
     writeups_dir = ROOT / "writeups"
     if writeups_dir.exists():
@@ -466,6 +520,8 @@ def build_evidence_section() -> str:
             rel = path.relative_to(ROOT).as_posix()
             if status.lower() == "completed":
                 completed_items.append(_evidence_link(title, rel))
+            else:
+                draft_items.append(_evidence_link(title, rel))
 
     manifest = read_optional_json(EVIDENCE, {})
     if isinstance(manifest, dict):
@@ -482,17 +538,28 @@ def build_evidence_section() -> str:
                 if title and target:
                     completed_items.append(_evidence_link(title, target))
 
-    header = "## Practical Labs and Reports\n\n"
-    parts = []
+    parts = ["## Practical Labs and Reports"]
     if completed_items:
         parts.append("### Completed Reports\n\n" + "\n".join(completed_items))
     else:
         parts.append(
-            "Completed practical reports will be added here as they are finished. "
-            "Draft notes and templates are not presented as completed work."
+            "### Completed Reports\n\n"
+            "No completed reports are published yet. Reports will appear here only "
+            "after their notes have been reviewed and finished."
         )
 
-    return header + "\n\n".join(parts)
+    if draft_items:
+        parts.append(
+            "### Lab Notes and Drafts\n\n"
+            "These files relate to completed rooms, but the write-ups themselves are "
+            "still working notes or templates and are not presented as completed reports.\n\n"
+            "<details>\n"
+            f"<summary>{len(draft_items)} lab notes and write-up drafts</summary>\n\n"
+            + "\n".join(draft_items)
+            + "\n\n</details>"
+        )
+
+    return "\n\n".join(parts)
 
 
 # --- Hack The Box (future-ready, no invented data) -------------------------
@@ -684,12 +751,14 @@ def build_hackthebox_summary(data: dict | None = None) -> str:
     if not isinstance(data, dict):
         data = {}
 
-    identity = data.get("public_identity") if isinstance(data.get("public_identity"), dict) else {}
-    username = html.escape(str(identity.get("username") or "PreMortem").strip())
-    profile_url = safe_url(identity.get("profile_url")) or "https://htb.site/PreMortem"
+    # The public README identity is deliberately fixed. Saved HTB identity data
+    # may be absent, stale, malformed, or contain an account holder's private
+    # name; none of it is allowed to override the approved public identity.
+    username = "PreMortem"
+    profile_url = "https://htb.site/PreMortem"
     totals = _htb_totals(data)
 
-    header = "### Hack The Box Summary\n\n"
+    header = "## Hack The Box\n\n"
     identity_line = f"**Profile:** [{username}]({profile_url})<br>**Last local sync:** {format_sync_timestamp(data.get('synced_at'))}"
 
     if not totals:
@@ -734,7 +803,7 @@ def _cisco_counts(data: dict) -> list[tuple[str, int]]:
 
 def build_cisco_summary(data: dict | None = None) -> str:
     data, state = _validated_cisco_data(data)
-    header = "### Cisco Networking Academy Summary\n\n"
+    header = "## Cisco Networking Academy\n\n"
     if state == "unavailable":
         return header + (
             "**Status:** Saved Cisco data is unavailable or failed validation.<br>\n"
@@ -778,21 +847,43 @@ def build_portfolio_stats(
     cisco_data, _cisco_state = _validated_cisco_data(cisco_data)
     cisco_courses = len(cisco_data.get("courses") or [])
 
-    writeup_stubs = 0
+    completed_reports = 0
+    writeup_drafts = 0
     writeups_dir = ROOT / "writeups"
     if writeups_dir.exists():
-        writeup_stubs = len([p for p in writeups_dir.rglob("*.md") if "templates" not in p.parts])
+        for path in writeups_dir.rglob("*.md"):
+            if "templates" in path.parts:
+                continue
+            _title, status = _read_title_and_status(path)
+            if status.lower() == "completed":
+                completed_reports += 1
+            else:
+                writeup_drafts += 1
 
+    rows = [
+        ("Completed TryHackMe Rooms", room_count, "Completed hands-on training rooms"),
+        ("Earned TryHackMe Badges", badge_count, "Achievement badges from completed training"),
+        ("Active Security Projects", len(PROJECTS), "Hardware, embedded systems, and automation"),
+    ]
+    if completed_reports:
+        rows.append(("Completed Practical Reports", completed_reports, "Reviewed published reports"))
+    if writeup_drafts:
+        rows.append(("Lab Notes and Drafts", writeup_drafts, "Clearly labelled work in progress"))
+    if htb_total_labs:
+        rows.append(("Hack The Box Labs", htb_total_labs, "Completed Machines and Sherlocks"))
+    if cisco_courses:
+        rows.append(("Cisco NetAcad Courses", cisco_courses, "Sanitised course achievement records"))
+
+    table_rows = "\n".join(
+        f"| {md_cell(label)} | {count} | {md_cell(description)} |"
+        for label, count, description in rows
+        if count
+    )
     return (
         "## Portfolio Statistics\n\n"
         "| Category | Recorded Count | Description |\n"
         "|---|---|---|\n"
-        f"| TryHackMe Rooms | {room_count} | Completed hands-on training rooms |\n"
-        f"| TryHackMe Badges | {badge_count} | Earned achievement badges |\n"
-        f"| Hack The Box Labs | {htb_total_labs} | Completed Machines and Sherlocks |\n"
-        f"| Cisco NetAcad Courses | {cisco_courses} | Sanitised course achievement records |\n"
-        f"| Practical Write-up Stubs | {writeup_stubs} | Maintained lab notes and template stubs |\n"
-        "| Security Projects | 3 | Hardware, embedded systems, and security automation |"
+        f"{table_rows}"
     )
 
 
@@ -819,10 +910,13 @@ def build_tryhackme_detailed(profile: dict, rooms: dict, badges: dict) -> str:
     rows = []
     ordered = sorted(rooms.get("rooms", []), key=lambda item: item.get("completed", ""), reverse=True)
     for room in ordered:
-        name = room.get("name", "").replace("|", "\\|")
-        if room.get("url"):
-            name = f"[{name}]({room['url']})"
-        rows.append(f"| {name} | {room.get('difficulty') or '—'} | {room.get('completed', '—')} |")
+        name = md_cell(safe_public_text(room.get("name"), "Sanitised room"))
+        room_url = tryhackme_room_url(room.get("url"))
+        if room_url:
+            name = f"[{name}]({room_url})"
+        difficulty = md_cell(safe_public_text(room.get("difficulty"), "—"))
+        completed = md_cell(safe_public_text(room.get("completed"), "—"))
+        rows.append(f"| {name} | {difficulty} | {completed} |")
     if not rows:
         rows.append("| No rooms recorded yet | — | — |")
 
@@ -914,30 +1008,17 @@ def build_cisco_detailed(data: dict | None = None) -> str:
     return "\n\n".join(parts)
 
 
-def _summary_count(label: str, count: int) -> str:
-    noun = label.lower()
-    if count == 1 and noun.endswith("s"):
-        noun = noun[:-1]
-    return f"{count} {noun}"
-
-
 def build_training_snapshot(
     rooms: dict,
     badges: dict,
     htb_data: dict | None = None,
     cisco_data: dict | None = None,
+    profile: dict | None = None,
 ) -> str:
-    """Build a compact recruiter-facing summary from validated saved evidence."""
-    if not isinstance(htb_data, dict):
-        htb_data = {}
-
-    room_count = len(rooms.get("rooms") or [])
-    badge_count = len(badges.get("badges") or [])
-    lines = []
-    if room_count or badge_count:
-        lines.append(
-            f"- **TryHackMe:** {room_count} completed rooms and {badge_count} earned badges."
-        )
+    """Build the public TryHackMe overview from validated saved evidence."""
+    del htb_data, cisco_data
+    if not isinstance(profile, dict):
+        profile = {}
 
     focus_areas = []
     if _rooms_matching(rooms, ("networking", "lan", "dns")):
@@ -950,33 +1031,169 @@ def build_training_snapshot(
          "idor", "authentication bypass"),
     ):
         focus_areas.append("web security")
-    if focus_areas:
-        lines.append("- **Current lab focus:** " + ", ".join(focus_areas) + ".")
 
-    htb_totals = _htb_totals(htb_data)
-    if htb_totals:
-        htb_summary = ", ".join(_summary_count(label, count) for label, count in htb_totals)
-        lines.append(f"- **Hack The Box:** {htb_summary} recorded.")
-
-    cisco_data, cisco_state = _validated_cisco_data(cisco_data)
-    if cisco_state == "available":
-        cisco_totals = [
-            (label, count) for label, count in _cisco_counts(cisco_data) if count
-        ]
-        if cisco_totals:
-            cisco_summary = ", ".join(
-                _summary_count(label, count) for label, count in cisco_totals
-            )
-            lines.append(f"- **Cisco Networking Academy:** {cisco_summary} recorded.")
-
-    if not lines:
-        lines.append("Verified practical training evidence will appear here as it is completed.")
+    profile_lines = f"**Profile:** [PreMortem]({PROFILE_URL})"
+    if profile.get("last_sync"):
+        profile_lines += (
+            f"<br>\n**Last local sync:** "
+            f"{format_sync_timestamp(profile.get('last_sync'))}"
+        )
 
     return (
-        "## Practical Training Snapshot\n\n"
-        + "\n".join(lines)
-        + "\n\nSee [TRAINING.md](TRAINING.md) for the complete room history, badges, "
-        "completion dates, milestones, and platform-specific evidence."
+        "## TryHackMe\n\n"
+        f"{profile_lines}\n\n"
+        f"{build_progress_summary(rooms, badges)}\n\n"
+        f"**Current focus:** {', '.join(focus_areas) if focus_areas else 'practical security foundations'}.\n\n"
+        "[TRAINING.md](TRAINING.md#tryhackme) retains the same evidence as a complete "
+        "platform history."
+    )
+
+
+def build_recent_rooms_section(rooms: dict, limit: int | None = None) -> str:
+    """Render completed rooms in reverse completion order.
+
+    README rendering passes no limit so every saved room remains visible. A
+    caller may still request a smaller sample for another output.
+    """
+    ordered = sorted(
+        rooms.get("rooms") or [],
+        key=lambda item: item.get("completed", ""),
+        reverse=True,
+    )
+    if limit is not None:
+        ordered = ordered[:limit]
+    if not ordered:
+        return ""
+
+    rows = []
+    for room in ordered:
+        name = md_cell(safe_public_text(room.get("name"), "Sanitised room"))
+        url = tryhackme_room_url(room.get("url"))
+        linked_name = f"[{name}]({url})" if url else name
+        rows.append(
+            f"| {linked_name} | {md_cell(safe_public_text(room.get('difficulty'), '—'))} "
+            f"| {md_cell(safe_public_text(room.get('completed'), '—'))} |"
+        )
+    return (
+        "### Completed Rooms — Recent First\n\n"
+        "| Room | Difficulty | Completed |\n"
+        "|---|---|---|\n"
+        + "\n".join(rows)
+    )
+
+
+def build_achievement_cabinet_section(badges: dict) -> str:
+    earned = badges.get("badges") or []
+    if not earned:
+        return ""
+    return (
+        "### Achievement Cabinet\n\n"
+        "Earned TryHackMe badges generated from the saved canonical badge data. "
+        "Each badge links to its public achievement page.\n\n"
+        + build_badge_showcase(earned)
+    )
+
+
+def build_room_milestones_section(rooms: dict) -> str:
+    room_count = len(rooms.get("rooms") or [])
+    if not room_count:
+        return ""
+    return (
+        "### Room Milestones\n\n"
+        "_Portfolio progress milestones — a personal tracker, not official TryHackMe badges._\n\n"
+        + build_milestones(room_count)
+    )
+
+
+def build_portfolio_maintenance_section() -> str:
+    """Explain the supporting automation without making it the portfolio identity."""
+    return (
+        "## How This Portfolio Is Maintained\n\n"
+        "The evidence above is generated from versioned JSON data by "
+        "[`portfolio.py`](portfolio.py). Sync operations replace only the content "
+        "between the generated markers; the personal introduction, About Me, What I "
+        "Bring, project narratives, Current Focus, and contact details remain "
+        "manually authored outside that boundary.\n\n"
+        "### Supported Platforms\n\n"
+        "- **TryHackMe:** completed rooms, difficulty, completion dates, earned badges, "
+        "and public profile metadata.\n"
+        "- **Hack The Box:** Labs and Academy achievement metadata where the "
+        "authenticated application exposes it reliably. Flags, answers, and solution "
+        "steps are never published.\n"
+        "- **Cisco Networking Academy:** versioned offline schema, privacy scrubber, "
+        "saved-data rendering, and CLI selection. Live browser extraction is not yet "
+        "implemented and is not claimed as working.\n\n"
+        "### Running the Sync Engine\n\n"
+        "The local Python CLI isolates platform failures, validates saved data, and "
+        "regenerates both this public showcase and the complete [TRAINING.md](TRAINING.md) "
+        "record. A failed platform sync preserves previously verified data from every "
+        "other platform.\n\n"
+        "```bash\n"
+        "git clone https://github.com/Pre-Mortem/cybersecurity-portfolio.git\n"
+        "cd cybersecurity-portfolio\n"
+        "chmod +x setup sync-portfolio sync-tryhackme\n"
+        "./setup\n"
+        "./sync-portfolio\n"
+        "```\n\n"
+        "The interactive menu offers individual platforms, all platforms, regeneration "
+        "from saved data, or exit. Equivalent non-interactive commands include:\n\n"
+        "```bash\n"
+        "python3 portfolio.py sync --platform tryhackme\n"
+        "python3 portfolio.py sync --platform hackthebox\n"
+        "python3 portfolio.py sync --platform all\n"
+        "python3 portfolio.py render\n"
+        "```\n\n"
+        "Nothing is committed automatically. After synchronisation the CLI reports "
+        "per-platform outcomes and requests confirmation before any commit; pushing "
+        "requires explicit authorization. On macOS, `install-desktop-shortcut` can "
+        "create a local Finder launcher without storing machine-specific paths in Git.\n\n"
+        "### Local Browser Sessions\n\n"
+        "Each authenticated platform uses its own persistent local browser profile: "
+        "`.thm-browser/` for TryHackMe, `.htb-browser/` for Hack The Box, and the "
+        "reserved `.cisco-browser/` for future Cisco collection. These directories are "
+        "Git-ignored and never logged or shared. Login, SSO, MFA, and session reset "
+        "remain manual, user-controlled browser actions.\n\n"
+        "### What Is Collected\n\n"
+        "Safe public achievement metadata only: titles, names, difficulty, category, "
+        "operating system, active or retired status, completion or issue dates, badges, "
+        "certifications, skills where reliably exposed, and explicitly public profile "
+        "identity where supported.\n\n"
+        "### What Is Never Collected\n\n"
+        "Passwords, email addresses, real names, 2FA or recovery codes, access or "
+        "bearer tokens, raw cookies, session or local storage, internal account IDs, "
+        "private certificate URLs or IDs, VPN configuration, flags, answers, and "
+        "solution steps are excluded.\n\n"
+        "### Generated Data and Privacy\n\n"
+        "Interactive authentication uses isolated local browser profiles "
+        "(`.thm-browser/`, `.htb-browser/`, and the reserved `.cisco-browser/`). "
+        "Cookies, tokens, browser storage, account identifiers, private URLs, learner "
+        "identity, email addresses, VPN material, flags, answers, and credentials are "
+        "excluded from tracked output. Only safe public achievement metadata is "
+        "rendered, and staged files are checked before publication.\n\n"
+        "### Technical Documentation\n\n"
+        "- [Sync engine architecture and CLI](docs/SYNC_ENGINE.md)\n"
+        "- [Authentication model](docs/AUTHENTICATION.md)\n"
+        "- [Privacy controls](docs/PRIVACY.md)\n"
+        "- [Versioned data schemas](docs/DATA_SCHEMA.md)\n"
+        "- [Development roadmap](docs/ROADMAP.md)\n\n"
+        "### Current Limitations\n\n"
+        "- Live account login cannot run in CI because authentication is interactive "
+        "and may require SSO or MFA.\n"
+        "- Cisco live browser collection remains unimplemented; no endpoints have "
+        "been guessed.\n"
+        "- Platform fields that cannot be collected reliably are left empty rather "
+        "than fabricated.\n\n"
+        "### Roadmap\n\n"
+        "The multi-platform CLI, TryHackMe integration, Hack The Box integration, "
+        "personal portfolio renderer, and Cisco offline foundation are complete. The "
+        "next planned integration work is evidence-based Cisco browser collection "
+        "after its live user journey has been inspected safely. See the "
+        "[development roadmap](docs/ROADMAP.md) for milestone details.\n\n"
+        "### Repository Rules\n\n"
+        "- No TryHackMe or Hack The Box flags, copied answers, or solution steps.\n"
+        "- No passwords, cookies, tokens, API keys, private account data, or learner identity.\n"
+        "- No unfinished write-up template is presented as a completed report.\n"
+        "- Every public claim must be supported by saved evidence or documented project work."
     )
 
 
@@ -987,16 +1204,23 @@ def render(
     htb_data: dict | None = None,
     cisco_data: dict | None = None,
 ) -> str:
-    del profile
     if htb_data is None:
         htb_data = read_optional_json(HACKTHEBOX, {})
 
     sections = [
         build_qualification_section(),
-        build_training_snapshot(rooms, badges, htb_data, cisco_data),
+        build_skills_section(rooms, badges),
         build_evidence_section(),
+        build_training_snapshot(rooms, badges, htb_data, cisco_data, profile),
+        build_recent_rooms_section(rooms),
+        build_achievement_cabinet_section(badges),
+        build_room_milestones_section(rooms),
+        build_hackthebox_summary(htb_data),
+        build_cisco_summary(cisco_data),
+        build_portfolio_stats(rooms, badges, htb_data, cisco_data),
+        build_portfolio_maintenance_section(),
     ]
-    return GEN_START + "\n" + "\n\n".join(sections) + "\n" + GEN_END
+    return GEN_START + "\n" + "\n\n".join(section for section in sections if section) + "\n" + GEN_END
 
 
 def render_training(
