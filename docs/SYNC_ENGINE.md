@@ -22,9 +22,10 @@ portfolio.py (CLI & Orchestrator)
 - **Data Storage**: Collected evidence is stored in versioned JSON files under `data/` (`rooms.json`, `badges.json`, `profile.json`, `hackthebox.json`, `cisco_netacad.json`, `evidence.json`).
 - **Rendering Engine**: `portfolio.py` parses saved JSON data and updates two
   primary bounded regions in `README.md`. The `PROFILE-SNAPSHOT` region owns
-  the safe qualification summary/table and changing TryHackMe room and badge
-  totals. The bounded `PROJECTS` table is generated from safe public project
-  records while the detailed authored narratives remain outside it. The main
+  the canonical professional display name, safe qualification summary/table,
+  and changing TryHackMe room and badge totals. The bounded `PROJECTS` table
+  is generated from safe public project records while the detailed authored
+  narratives remain outside it. The main
   `PORTFOLIO` region
   owns evidence-backed skills, the complete saved TryHackMe room table, the
   earned badge cabinet, room milestones, report and draft links, and compact
@@ -32,9 +33,12 @@ portfolio.py (CLI & Orchestrator)
   key areas, About Me, working style, project narratives, Current Focus,
   contact details, and automation summary are maintained outside those regions
   and cannot be replaced by a platform sync. TryHackMe profile updates merge
-  their own fields and preserve manually maintained qualification and project
-  records. Platforms without completed
-  activity render an accurate empty state rather than invented achievements.
+  their own external-account fields and preserve the professional
+  `display_name`, manually maintained qualifications, and project records. The
+  bounded `TRAINING-IDENTITY` region similarly keeps the training title and
+  introduction aligned with canonical profile data. Platforms without
+  completed activity render an accurate empty state rather than invented
+  achievements.
   `TRAINING.md` remains the complete generated platform history, while detailed
   engine, authentication, privacy, schema, and roadmap information remains in
   `docs/`.

@@ -35,6 +35,8 @@ PROJECTS_START = "<!-- PROJECTS:START -->"
 PROJECTS_END = "<!-- PROJECTS:END -->"
 TRAINING_START = "<!-- TRAINING:START -->"
 TRAINING_END = "<!-- TRAINING:END -->"
+TRAINING_IDENTITY_START = "<!-- TRAINING-IDENTITY:START -->"
+TRAINING_IDENTITY_END = "<!-- TRAINING-IDENTITY:END -->"
 PROFILE_URL = "https://tryhackme.com/p/PreMortem"
 
 
@@ -301,6 +303,7 @@ def md_cell(value) -> str:
 
 PROFILE_ROOT_FIELDS = {
     "schema_version",
+    "display_name",
     "last_sync",
     "profile_card_path",
     "username",
@@ -339,6 +342,8 @@ def validate_profile_data(profile: dict) -> list[str]:
         errors.append(
             "unknown profile fields: " + ", ".join(sorted(unknown_root))
         )
+    if not safe_public_text(profile.get("display_name")):
+        errors.append("display_name is required")
 
     qualifications = profile.get("qualifications", [])
     if not isinstance(qualifications, list):
@@ -455,6 +460,13 @@ def build_qualifications_table(profile: dict) -> str:
         "|---|---|---:|---|---|\n"
         + "\n".join(rows)
     )
+
+
+def public_display_name(profile: dict) -> str:
+    """Return the canonical professional name, separate from account names."""
+    if not isinstance(profile, dict):
+        return ""
+    return safe_public_text(profile.get("display_name"))
 
 
 def build_qualification_summary(profile: dict) -> str:
@@ -915,9 +927,9 @@ def build_hackthebox_summary(data: dict | None = None) -> str:
     if not isinstance(data, dict):
         data = {}
 
-    # The public README identity is deliberately fixed. Saved HTB identity data
+    # The external HTB account identity is deliberately fixed. Saved HTB data
     # may be absent, stale, malformed, or contain an account holder's private
-    # name; none of it is allowed to override the approved public identity.
+    # name; none of it may override the verified external username and URL.
     username = "PreMortem"
     profile_url = "https://htb.site/PreMortem"
     totals = _htb_totals(data)
@@ -1201,6 +1213,12 @@ def render_profile_snapshot(
     """Render changing public CV figures inside the authored profile snapshot."""
     room_count = len(rooms.get("rooms") or [])
     badge_count = len(badges.get("badges") or [])
+    display_name = public_display_name(profile or {})
+    identity_content = (
+        f"- **Portfolio owner:** {md_cell(display_name)}\n"
+        if display_name
+        else ""
+    )
     qualification_content = ""
     if profile and profile.get("qualifications"):
         qualification_content = (
@@ -1209,6 +1227,7 @@ def render_profile_snapshot(
         )
     return (
         f"{SNAPSHOT_START}\n"
+        f"{identity_content}"
         f"{qualification_content}"
         f"- **TryHackMe evidence:** {room_count} completed rooms and "
         f"{badge_count} earned badges\n"
@@ -1333,14 +1352,25 @@ def update_readme(
     README.write_text(text, encoding="utf-8")
 
 
-def update_training_md(section: str) -> None:
+def render_training_identity(profile: dict) -> str:
+    """Render the professional owner separately from platform usernames."""
+    display_name = public_display_name(profile) or "Portfolio Owner"
+    return (
+        f"{TRAINING_IDENTITY_START}\n"
+        f"# Cybersecurity Training History — {display_name}\n\n"
+        f"This is the supporting training record for {display_name}'s cybersecurity\n"
+        "portfolio. It contains detailed, evidence-backed activity generated from saved\n"
+        "platform data by the "
+        "[Cybersecurity Portfolio Sync Engine](docs/SYNC_ENGINE.md).\n"
+        f"{TRAINING_IDENTITY_END}"
+    )
+
+
+def update_training_md(section: str, profile: dict | None = None) -> None:
+    identity = render_training_identity(profile or {})
     if not TRAINING_MD.exists():
         initial = (
-            "# Cybersecurity Training History — Pre-Mortem\n\n"
-            "This is the supporting training record for Pre-Mortem's cybersecurity "
-            "portfolio. It contains detailed, evidence-backed activity generated from "
-            "saved platform data by the "
-            "[Cybersecurity Portfolio Sync Engine](docs/SYNC_ENGINE.md).\n\n"
+            f"{identity}\n\n"
             f"{TRAINING_START}\n{TRAINING_END}\n"
         )
         TRAINING_MD.write_text(initial, encoding="utf-8")
@@ -1348,15 +1378,19 @@ def update_training_md(section: str) -> None:
     pattern = re.compile(re.escape(TRAINING_START) + r".*?" + re.escape(TRAINING_END), re.DOTALL)
     if not pattern.search(text):
         initial = (
-            "# Cybersecurity Training History — Pre-Mortem\n\n"
-            "This is the supporting training record for Pre-Mortem's cybersecurity "
-            "portfolio. It contains detailed, evidence-backed activity generated from "
-            "saved platform data by the "
-            "[Cybersecurity Portfolio Sync Engine](docs/SYNC_ENGINE.md).\n\n"
+            f"{identity}\n\n"
             f"{TRAINING_START}\n{TRAINING_END}\n"
         )
         TRAINING_MD.write_text(initial, encoding="utf-8")
         text = TRAINING_MD.read_text(encoding="utf-8")
+    identity_pattern = re.compile(
+        re.escape(TRAINING_IDENTITY_START)
+        + r".*?"
+        + re.escape(TRAINING_IDENTITY_END),
+        re.DOTALL,
+    )
+    if identity_pattern.search(text):
+        text = identity_pattern.sub(lambda _match: identity, text)
     TRAINING_MD.write_text(pattern.sub(lambda _match: section, text), encoding="utf-8")
 
 
@@ -1470,7 +1504,10 @@ def regenerate_readme() -> None:
         render_profile_snapshot(rooms, badges, profile),
         build_selected_projects_table(profile),
     )
-    update_training_md(render_training(profile, rooms, badges, htb_data, cisco_data))
+    update_training_md(
+        render_training(profile, rooms, badges, htb_data, cisco_data),
+        profile,
+    )
 
 
 def sync_tryhackme_platform() -> PlatformOutcome:

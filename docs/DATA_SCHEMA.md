@@ -59,6 +59,7 @@ Stores safe public CV records alongside top-level TryHackMe profile state.
 ```json
 {
   "schema_version": 1,
+  "display_name": "Aleck Dragonetti",
   "username": "PreMortem",
   "profile_url": "https://tryhackme.com/p/PreMortem",
   "last_sync": "2026-07-23T11:44:00+00:00",
@@ -86,6 +87,10 @@ Stores safe public CV records alongside top-level TryHackMe profile state.
   ]
 }
 ```
+
+`display_name` is the professional portfolio-owner name used by generated CV
+content. It is deliberately separate from `username` and `profile_url`, which
+retain the identifiers required by external services.
 
 Qualification `status` is `completed` or `in_progress`; `awarded` and
 `completion_year` are optional. Learner, certificate, centre, validation and

@@ -139,6 +139,32 @@ class TestPublicProfileRenderer(unittest.TestCase):
             rendered,
         )
 
+    def test_professional_name_is_separate_from_external_identifiers(self):
+        self.assertEqual(
+            portfolio.public_display_name(self.profile), "Aleck Dragonetti"
+        )
+        snapshot = portfolio.render_profile_snapshot(
+            {"rooms": []}, {"badges": []}, self.profile
+        )
+        training_identity = portfolio.render_training_identity(self.profile)
+        self.assertIn("**Portfolio owner:** Aleck Dragonetti", snapshot)
+        self.assertIn(
+            "# Cybersecurity Training History — Aleck Dragonetti",
+            training_identity,
+        )
+        self.assertEqual(self.profile["username"], "PreMortem")
+        self.assertEqual(
+            self.profile["profile_url"],
+            "https://tryhackme.com/p/PreMortem",
+        )
+        self.assertEqual(
+            portfolio.PROFILE_URL, "https://tryhackme.com/p/PreMortem"
+        )
+        htb_summary = portfolio.build_hackthebox_summary(htb.empty_schema())
+        self.assertIn(
+            "[PreMortem](https://htb.site/PreMortem)", htb_summary
+        )
+
     def test_missing_award_date_renders_as_em_dash(self):
         profile = {
             "qualifications": [
@@ -282,8 +308,8 @@ class TestIdempotentRender(unittest.TestCase):
             readme = Path(directory) / "README.md"
             training = Path(directory) / "TRAINING.md"
             authored_readme = (
-                "# Pre-Mortem — Cybersecurity Portfolio\n\n"
-                "I am developing practical cybersecurity skills.\n\n"
+                "# Aleck Dragonetti — Cybersecurity Portfolio\n\n"
+                "I am Aleck Dragonetti, developing practical cybersecurity skills.\n\n"
                 "## Profile Snapshot\n\n"
                 "Qualification and key areas remain authored.\n"
                 f"{portfolio.SNAPSHOT_START}\nold counts\n{portfolio.SNAPSHOT_END}\n\n"
@@ -297,11 +323,14 @@ class TestIdempotentRender(unittest.TestCase):
                 "### Cybersecurity Portfolio Automation\n\nPersonal project narrative.\n\n"
                 f"{portfolio.GEN_START}\nold generated content\n{portfolio.GEN_END}\n\n"
                 "## Current Focus\n\nCurrent development priorities.\n\n"
-                "## Contact and Profiles\n\nPre-Mortem only.\n"
+                "## Contact and Profiles\n\nAleck Dragonetti.\n"
             )
             readme.write_text(authored_readme, encoding="utf-8")
             training.write_text(
                 "Training-authored introduction.\n\n"
+                f"{portfolio.TRAINING_IDENTITY_START}\n"
+                "# Cybersecurity Training History — Old Name\n"
+                f"{portfolio.TRAINING_IDENTITY_END}\n\n"
                 f"{portfolio.TRAINING_START}\nold generated content\n{portfolio.TRAINING_END}\n\n"
                 "Training-authored closing.\n",
                 encoding="utf-8",
@@ -311,19 +340,20 @@ class TestIdempotentRender(unittest.TestCase):
                 portfolio.update_readme(
                     readme_section, snapshot_section, project_section
                 )
-                portfolio.update_training_md(training_section)
+                portfolio.update_training_md(training_section, profile)
                 first = (readme.read_text(encoding="utf-8"),
                          training.read_text(encoding="utf-8"))
                 portfolio.update_readme(
                     readme_section, snapshot_section, project_section
                 )
-                portfolio.update_training_md(training_section)
+                portfolio.update_training_md(training_section, profile)
                 second = (readme.read_text(encoding="utf-8"),
                           training.read_text(encoding="utf-8"))
 
             self.assertEqual(first, second)
             for personal_section in (
-                "I am developing practical cybersecurity skills.",
+                "# Aleck Dragonetti — Cybersecurity Portfolio",
+                "I am Aleck Dragonetti, developing practical cybersecurity skills.",
                 "## Profile Snapshot",
                 "Qualification and key areas remain authored.",
                 "## About Me",
@@ -357,6 +387,10 @@ class TestIdempotentRender(unittest.TestCase):
                 "Two completed NCFE Level 2 qualifications", first[0]
             )
             self.assertTrue(first[1].startswith("Training-authored introduction."))
+            self.assertIn(
+                "# Cybersecurity Training History — Aleck Dragonetti",
+                first[1],
+            )
             self.assertTrue(first[1].endswith("Training-authored closing.\n"))
 
     def test_empty_platforms_do_not_create_prominent_readme_sections(self):
@@ -578,7 +612,7 @@ class TestIdempotentRender(unittest.TestCase):
     def test_repository_readme_starts_with_personal_sections(self):
         readme = portfolio.README.read_text(encoding="utf-8")
         expected_order = (
-            "# Pre-Mortem — Cybersecurity Portfolio",
+            "# Aleck Dragonetti — Cybersecurity Portfolio",
             "## Profile Snapshot",
             "## About Me",
             "## What I Bring",
@@ -601,7 +635,20 @@ class TestIdempotentRender(unittest.TestCase):
             readme.index("## About Me"),
         )
         self.assertIn(
-            "I am developing practical cybersecurity skills through formal study",
+            "I am Aleck Dragonetti, developing practical cybersecurity skills",
+            readme,
+        )
+        self.assertIn("**Portfolio owner:** Aleck Dragonetti", readme)
+        self.assertIn(
+            "[GitHub — Aleck Dragonetti](https://github.com/Pre-Mortem)",
+            readme,
+        )
+        self.assertIn(
+            "[TryHackMe — PreMortem](https://tryhackme.com/p/PreMortem)",
+            readme,
+        )
+        self.assertIn(
+            "[Hack The Box — PreMortem](https://htb.site/PreMortem)",
             readme,
         )
         self.assertIn("dynamic device discovery", readme)
@@ -661,6 +708,16 @@ class TestIdempotentRender(unittest.TestCase):
         self.assertIn("### Achievement Cabinet", rendered)
         self.assertIn("Fiction Box", rendered)
         self.assertIn("Fixture Networking Basics", rendered)
+
+        training_document = portfolio.TRAINING_MD.read_text(encoding="utf-8")
+        self.assertIn(
+            "# Cybersecurity Training History — Aleck Dragonetti",
+            training_document,
+        )
+        self.assertIn(
+            "[PreMortem](https://tryhackme.com/p/PreMortem)",
+            training_document,
+        )
 
 
 class TestInteractiveMenu(unittest.TestCase):

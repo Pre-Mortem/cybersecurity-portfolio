@@ -1,6 +1,6 @@
 # Development Roadmap
 
-This document outlines completed milestones and future enhancements for the **Pre-Mortem Cybersecurity Portfolio & Sync Engine**.
+This document outlines completed milestones and future enhancements for the **Aleck Dragonetti Cybersecurity Portfolio & Sync Engine**.
 
 ---
 
@@ -27,7 +27,7 @@ This document outlines completed milestones and future enhancements for the **Pr
 ---
 
 ## Milestone 3 — Recruiter CV Redesign & Training History Separation (Completed)
-- [x] Redesign `README.md` as a personal-first, recruiter-facing cybersecurity portfolio for **Pre-Mortem**.
+- [x] Redesign `README.md` as a personal-first, recruiter-facing cybersecurity portfolio for **Aleck Dragonetti**.
 - [x] Keep visible proof on the front page: a qualification and evidence
   snapshot, evidence-backed skills, live training totals, the complete saved
   room table, earned badge cabinet, personal milestones, report links, and

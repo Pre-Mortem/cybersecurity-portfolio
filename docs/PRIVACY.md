@@ -6,26 +6,34 @@ This repository serves as a public cybersecurity CV and portfolio. Privacy, secu
 
 ## Public Identity
 
-- **Public Identity**: **Pre-Mortem**
-- **Public Profile URLs**:
+- **Professional display name**: **Aleck Dragonetti**
+- **External account identifiers and profile URLs**:
   - TryHackMe: `https://tryhackme.com/p/PreMortem`
   - Hack The Box: `https://htb.site/PreMortem`
   - GitHub: `https://github.com/Pre-Mortem`
 
+The canonical professional name is stored as `display_name` in
+`data/profile.json`. External usernames, repository ownership and profile URLs
+remain separate because they are service-controlled technical identifiers.
+
 ---
 
-## Real Name & PII Exclusion Policy
+## Personal Data Minimisation Policy
 
-To maintain privacy and online identity separation:
+To publish a professional CV while protecting unrelated personal data:
 
-1. **Zero Real-Name Exposure**: Real names, home addresses, local machine usernames, and email addresses are excluded from all tracked files, documentation, comments, generated outputs, commit messages, and test fixtures.
+1. **Approved Professional Name Only**: Aleck Dragonetti is the approved public
+   portfolio-owner name. Home addresses, local machine usernames, email
+   addresses, signatures and other unrelated identity data remain excluded.
 2. **Cisco Networking Academy Rules**: Internal platforms (such as Cisco Networking Academy) may require real names for official certificates. However, the public portfolio only displays non-identifying achievement details:
    - Course title
    - Completion status
    - Date achieved
    - Badge / Certificate type
    - Skills covered
-   - *Real names from Cisco or any third-party issuer are strictly scrubbed before publishing.*
+   - *Identity values collected from Cisco or any third-party issuer are
+     strictly scrubbed before publishing; the approved display name comes only
+     from canonical profile data.*
 
 The Cisco schema has no fields for public identity, email, account IDs,
 certificate IDs, URLs, or authentication state. Its normaliser discards unknown
@@ -51,8 +59,9 @@ or unsafe Cisco data.
 - Room and machine names, categories, tags, operating systems, and difficulty tiers.
 - Completion timestamps and active/retired status.
 - Publicly verifiable badges, milestones, and certifications.
-- Safe public profile URLs and the public identity (**Pre-Mortem**). External
-  platform usernames retain the spelling required by those platforms.
+- Safe public profile URLs and the professional display name (**Aleck
+  Dragonetti**). External platform usernames retain the spelling required by
+  those platforms.
 
 ### What IS NEVER Collected or Published
 - **No Flags**: `user.txt`, `root.txt`, THM/HTB flags.

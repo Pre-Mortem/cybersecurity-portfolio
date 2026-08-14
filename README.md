@@ -1,9 +1,10 @@
-# Pre-Mortem — Cybersecurity Portfolio
+# Aleck Dragonetti — Cybersecurity Portfolio
 
-I am developing practical cybersecurity skills through formal study, hands-on
-labs, software development, embedded systems, and security-focused hardware
-tooling. I learn most effectively by building and testing real systems,
-investigating what goes wrong, and documenting how I improved them.
+I am Aleck Dragonetti, developing practical cybersecurity skills through formal
+study, hands-on labs, software development, embedded systems, and
+security-focused hardware tooling. I learn most effectively by building and
+testing real systems, investigating what goes wrong, and documenting how I
+improved them.
 
 I am currently completing a Level 3 Certificate in Cyber Security Practices
 while building evidence across networking, Linux, web security, Python,
@@ -15,6 +16,7 @@ security, and security tooling.
 ## Profile Snapshot
 
 <!-- PROFILE-SNAPSHOT:START -->
+- **Portfolio owner:** Aleck Dragonetti
 - **Qualifications:** Two completed NCFE Level 2 qualifications in cyber security principles and coding; currently completing a Level 3 Certificate in Cyber Security Practices with Think Employment.
 
 | Qualification | Awarding body / provider | Level | Status | Awarded |
@@ -27,7 +29,6 @@ security, and security tooling.
 <!-- PROFILE-SNAPSHOT:END -->
 - **Key areas:** networking, Linux, web security, Python, security automation,
   embedded systems, and Android
-- **Public identity:** Pre-Mortem
 
 ## About Me
 
@@ -342,9 +343,10 @@ I am currently:
 
 ## Contact and Profiles
 
-I use **Pre-Mortem** as my public identity.
+I am **Aleck Dragonetti**. External profile links retain the usernames required
+by each service.
 
-- [GitHub — Pre-Mortem](https://github.com/Pre-Mortem)
+- [GitHub — Aleck Dragonetti](https://github.com/Pre-Mortem)
 - [TryHackMe — PreMortem](https://tryhackme.com/p/PreMortem)
 - [Hack The Box — PreMortem](https://htb.site/PreMortem)
 

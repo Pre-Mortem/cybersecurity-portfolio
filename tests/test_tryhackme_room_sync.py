@@ -370,6 +370,7 @@ class TestRoomMergeAndRendering(unittest.TestCase):
 class TestSafeFailureBoundary(unittest.TestCase):
     def test_manual_qualifications_and_projects_survive_room_sync_update(self):
         profile = {
+            "display_name": "Aleck Dragonetti",
             "qualifications": [{"title": "Safe Qualification"}],
             "projects": [{"name": "Safe Project"}],
             "last_sync": "2026-07-23T11:44:41+00:00",
@@ -379,6 +380,8 @@ class TestSafeFailureBoundary(unittest.TestCase):
         )
         self.assertEqual(updated["qualifications"], profile["qualifications"])
         self.assertEqual(updated["projects"], profile["projects"])
+        self.assertEqual(updated["display_name"], "Aleck Dragonetti")
+        self.assertEqual(updated["username"], "PreMortem")
         self.assertEqual(
             updated["last_sync"], "2026-07-29T09:00:00+00:00"
         )
