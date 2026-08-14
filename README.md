@@ -82,8 +82,8 @@ security work, and tools that make technical investigation more effective.
 | PacketPunch | In development · Private repository | Not quantified | A modern security hardware and software platform focused on current wireless, network and embedded technologies. |
 | ESP32-S2 AI HID Typer | In development · Private repository | Not quantified | An ESP32-S2 wireless HID keyboard system with an Android companion, dynamic discovery, emergency-stop controls and defensive input validation. |
 | [Cybersecurity Portfolio Automation](https://github.com/Pre-Mortem/cybersecurity-portfolio) | Active · Public repository | Active maintenance | Privacy-conscious Python automation for collecting, validating and rendering public cybersecurity training evidence. |
-| HackPod | In development · Private repository | 33% — 2 of 6 top-level roadmap stages complete | An evidence-first, minimalist ESP32-S3 music player with hardware-validated local playback, USB data transfer, interface work and mini-games; Bluetooth audio remains in development. |
-| X-Link | In development · Private repository | 21% — 3 of 14 roadmap milestones complete | An ESP32-based original Xbox network bridge using lwIP NAPT, with dashboard-managed networking, HTTP and FTP proxy functionality, Insignia compatibility work, diagnostics and recovery tooling. |
+| HackPod | In development · Private repository | 50% — 3 of 6 top-level roadmap stages complete | An ESP32-S3 music player with hardware-validated local playback, polished product UI, mini-games and dual-MCU Bluetooth audio; later product-polish work remains active. |
+| X-Link | In development · Private repository | 18% — 3 of 17 roadmap milestones complete | An ESP32-P4 original Xbox network bridge using lwIP NAPT, with dashboard-managed networking, HTTP and FTP proxying, Insignia routing fixes and a console-validated version-aware Downloader installer. |
 <!-- PROJECTS:END -->
 
 ### PacketPunch

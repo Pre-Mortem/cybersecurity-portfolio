@@ -57,19 +57,19 @@
       "name": "HackPod",
       "status": "in_development",
       "visibility": "private",
-      "summary": "An evidence-first, minimalist ESP32-S3 music player with hardware-validated local playback, USB data transfer, interface work and mini-games; Bluetooth audio remains in development.",
-      "progress_percent": 33,
-      "progress_label": "2 of 6 top-level roadmap stages complete",
-      "progress_evidence": "Milestones 0 and 3 are complete. Milestone 1 remains caveated, Milestone 2 and product polish are partial, and Bluetooth transport remains in progress."
+      "summary": "An ESP32-S3 music player with hardware-validated local playback, polished product UI, mini-games and dual-MCU Bluetooth audio; later product-polish work remains active.",
+      "progress_percent": 50,
+      "progress_label": "3 of 6 top-level roadmap stages complete",
+      "progress_evidence": "Milestones 0 and 3 plus Phase 4 Bluetooth are complete. Milestone 1 remains caveated, Milestone 2 is partial, and Milestone 4 product polish remains active."
     },
     {
       "name": "X-Link",
       "status": "in_development",
       "visibility": "private",
-      "summary": "An ESP32-based original Xbox network bridge using lwIP NAPT, with dashboard-managed networking, HTTP and FTP proxy functionality, Insignia compatibility work, diagnostics and recovery tooling.",
-      "progress_percent": 21,
-      "progress_label": "3 of 14 roadmap milestones complete",
-      "progress_evidence": "Milestones 0, 1 and 2 are complete. Partial, substantially complete and validation-pending milestones are deliberately excluded from the completed count."
+      "summary": "An ESP32-P4 original Xbox network bridge using lwIP NAPT, with dashboard-managed networking, HTTP and FTP proxying, Insignia routing fixes and a console-validated version-aware Downloader installer.",
+      "progress_percent": 18,
+      "progress_label": "3 of 17 roadmap milestones complete",
+      "progress_evidence": "The roadmap now contains Milestones 0 through 16. Only 0, 1 and 2 are marked Complete; substantial, partial, foundation, implemented and board-validated milestones with explicit remaining scope are excluded by policy."
     }
   ]
 }

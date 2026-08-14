@@ -372,7 +372,10 @@ class TestSafeFailureBoundary(unittest.TestCase):
         profile = {
             "display_name": "Aleck Dragonetti",
             "qualifications": [{"title": "Safe Qualification"}],
-            "projects": [{"name": "Safe Project"}],
+            "projects": [
+                {"name": "HackPod", "progress_percent": 50},
+                {"name": "X-Link", "progress_percent": 18},
+            ],
             "last_sync": "2026-07-23T11:44:41+00:00",
         }
         updated = room_sync.updated_profile_after_room_sync(
@@ -380,6 +383,8 @@ class TestSafeFailureBoundary(unittest.TestCase):
         )
         self.assertEqual(updated["qualifications"], profile["qualifications"])
         self.assertEqual(updated["projects"], profile["projects"])
+        self.assertEqual(updated["projects"][0]["progress_percent"], 50)
+        self.assertEqual(updated["projects"][1]["progress_percent"], 18)
         self.assertEqual(updated["display_name"], "Aleck Dragonetti")
         self.assertEqual(updated["username"], "PreMortem")
         self.assertEqual(

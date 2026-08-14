@@ -211,18 +211,23 @@ class TestPublicProfileRenderer(unittest.TestCase):
 
     def test_selected_projects_include_existing_and_new_rows(self):
         rendered = portfolio.build_selected_projects_table(self.profile)
-        for project in (
+        project_order = (
             "PacketPunch",
             "ESP32-S2 AI HID Typer",
             "Cybersecurity Portfolio Automation",
             "HackPod",
             "X-Link",
-        ):
+        )
+        for project in project_order:
             self.assertIn(project, rendered)
-        self.assertIn("33% — 2 of 6 top-level roadmap stages complete", rendered)
-        self.assertIn("21% — 3 of 14 roadmap milestones complete", rendered)
+        positions = [rendered.index(project) for project in project_order]
+        self.assertEqual(positions, sorted(positions))
+        self.assertIn("50% — 3 of 6 top-level roadmap stages complete", rendered)
+        self.assertIn("18% — 3 of 17 roadmap milestones complete", rendered)
+        self.assertIn("dual-MCU Bluetooth audio", rendered)
         self.assertIn("lwIP NAPT", rendered)
-        self.assertIn("Insignia compatibility work", rendered)
+        self.assertIn("Insignia routing fixes", rendered)
+        self.assertIn("console-validated version-aware Downloader", rendered)
 
     def test_private_project_urls_are_not_rendered(self):
         profile = {
