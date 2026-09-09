@@ -25,7 +25,7 @@ security, and security tooling.
 | NCFE Level 2 Certificate in the Principles of Cyber Security | NCFE | 2 | Completed | 29 May 2025 |
 | Certificate in Cyber Security Practices | Think Employment | 3 | In progress | — |
 
-- **TryHackMe evidence:** 29 completed rooms and 7 earned badges
+- **TryHackMe evidence:** 30 completed rooms and 7 earned badges
 <!-- PROFILE-SNAPSHOT:END -->
 - **Key areas:** networking, Linux, web security, Python, security automation,
   embedded systems, and Android
@@ -153,16 +153,17 @@ Each skill below is tied to work recorded in this repository — completed train
 ## TryHackMe
 
 **Profile:** [PreMortem](https://tryhackme.com/p/PreMortem)<br>
-**Last local sync:** 9 September 2026, 12:06 UTC
+**Last local sync:** 9 September 2026, 13:07 UTC
 
 <div align="center">
 
 <table>
 <tr>
-<td align="center">&nbsp;<strong>Rooms Completed</strong>&nbsp;<br>29</td>
+<td align="center">&nbsp;<strong>Rooms Completed</strong>&nbsp;<br>30</td>
 <td align="center">&nbsp;<strong>Badges Earned</strong>&nbsp;<br>7</td>
 <td align="center">&nbsp;<strong>Easy</strong>&nbsp;<br>17</td>
 <td align="center">&nbsp;<strong>Info</strong>&nbsp;<br>12</td>
+<td align="center">&nbsp;<strong>Medium</strong>&nbsp;<br>1</td>
 </tr>
 </table>
 
@@ -178,6 +179,7 @@ Each skill below is tied to work recorded in this repository — completed train
 |---|---|---|
 | [Windows Fundamentals 1](https://tryhackme.com/room/windowsfundamentals1xbx) | Info | 2026-09-09 |
 | [Windows Fundamentals 2](https://tryhackme.com/room/windowsfundamentals2x0x) | Info | 2026-09-09 |
+| [Monitoring Active Directory](https://tryhackme.com/room/monitoringactivedirectory) | Medium | 2026-09-09 |
 | [Introductory Researching](https://tryhackme.com/room/introtoresearch) | Easy | 2026-07-28 |
 | [Starting Out In Cyber Sec](https://tryhackme.com/room/startingoutincybersec) | Easy | 2026-07-28 |
 | [Linux Fundamentals Part 2](https://tryhackme.com/room/linuxfundamentalspart2) | Info | 2026-07-28 |
@@ -280,7 +282,7 @@ _Portfolio progress milestones — a personal tracker, not official TryHackMe ba
 ✅<br><strong>25 Rooms</strong><br>Complete
 </td>
 <td align="center" width="120">
-🚧<br><strong>50 Rooms</strong><br>29 / 50
+🚧<br><strong>50 Rooms</strong><br>30 / 50
 </td>
 <td align="center" width="120">
 ⬜<br><strong>100 Rooms</strong><br>Upcoming
@@ -301,7 +303,7 @@ No completed reports are published yet. Reports will appear here only after thei
 These files relate to completed rooms, but the write-ups themselves are still working notes or templates and are not presented as completed reports.
 
 <details>
-<summary>29 lab notes and write-up drafts</summary>
+<summary>30 lab notes and write-up drafts</summary>
 
 - [Authentication Bypass](writeups/tryhackme/authenticationbypass.md)
 - [Careers in Cyber](writeups/tryhackme/careersincyber.md)
@@ -320,6 +322,7 @@ These files relate to completed rooms, but the write-ups themselves are still wo
 - [Metasploit: Exploitation](writeups/tryhackme/metasploitexploitation.md)
 - [Metasploit: Introduction](writeups/tryhackme/metasploitintro.md)
 - [Metasploit: Meterpreter](writeups/tryhackme/meterpreter.md)
+- [Monitoring Active Directory](writeups/tryhackme/monitoringactivedirectory.md)
 - [Offensive Security Intro](writeups/tryhackme/offensivesecurityintro.md)
 - [OSI Model](writeups/tryhackme/osimodelzi.md)
 - [Packets &amp; Frames](writeups/tryhackme/packetsframes.md)

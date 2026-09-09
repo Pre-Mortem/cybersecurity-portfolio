@@ -20,16 +20,17 @@ Two completed NCFE Level 2 qualifications in cyber security principles and codin
 ## TryHackMe
 
 **Profile:** [PreMortem](https://tryhackme.com/p/PreMortem)<br>
-**Last local sync:** 9 September 2026, 12:06 UTC
+**Last local sync:** 9 September 2026, 13:07 UTC
 
 <div align="center">
 
 <table>
 <tr>
-<td align="center">&nbsp;<strong>Rooms Completed</strong>&nbsp;<br>29</td>
+<td align="center">&nbsp;<strong>Rooms Completed</strong>&nbsp;<br>30</td>
 <td align="center">&nbsp;<strong>Badges Earned</strong>&nbsp;<br>7</td>
 <td align="center">&nbsp;<strong>Easy</strong>&nbsp;<br>17</td>
 <td align="center">&nbsp;<strong>Info</strong>&nbsp;<br>12</td>
+<td align="center">&nbsp;<strong>Medium</strong>&nbsp;<br>1</td>
 </tr>
 </table>
 
@@ -41,6 +42,7 @@ Two completed NCFE Level 2 qualifications in cyber security principles and codin
 |---|---|---|
 | [Windows Fundamentals 1](https://tryhackme.com/room/windowsfundamentals1xbx) | Info | 2026-09-09 |
 | [Windows Fundamentals 2](https://tryhackme.com/room/windowsfundamentals2x0x) | Info | 2026-09-09 |
+| [Monitoring Active Directory](https://tryhackme.com/room/monitoringactivedirectory) | Medium | 2026-09-09 |
 | [Introductory Researching](https://tryhackme.com/room/introtoresearch) | Easy | 2026-07-28 |
 | [Starting Out In Cyber Sec](https://tryhackme.com/room/startingoutincybersec) | Easy | 2026-07-28 |
 | [Linux Fundamentals Part 2](https://tryhackme.com/room/linuxfundamentalspart2) | Info | 2026-07-28 |
@@ -143,7 +145,7 @@ _Portfolio progress milestones — a personal tracker, not official TryHackMe ba
 ✅<br><strong>25 Rooms</strong><br>Complete
 </td>
 <td align="center" width="120">
-🚧<br><strong>50 Rooms</strong><br>29 / 50
+🚧<br><strong>50 Rooms</strong><br>30 / 50
 </td>
 <td align="center" width="120">
 ⬜<br><strong>100 Rooms</strong><br>Upcoming

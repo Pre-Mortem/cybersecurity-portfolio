@@ -302,6 +302,17 @@
       "completion_date_source": "sync-date-fallback",
       "writeup": "writeups/tryhackme/windowsfundamentals2x0x.md",
       "source": "authenticated-completed-rooms-api"
+    },
+    {
+      "name": "Monitoring Active Directory",
+      "slug": "monitoringactivedirectory",
+      "url": "https://tryhackme.com/room/monitoringactivedirectory",
+      "difficulty": "Medium",
+      "category": "",
+      "completed": "2026-09-09",
+      "completion_date_source": "sync-date-fallback",
+      "writeup": "writeups/tryhackme/monitoringactivedirectory.md",
+      "source": "authenticated-completed-rooms-api"
     }
   ]
 }
