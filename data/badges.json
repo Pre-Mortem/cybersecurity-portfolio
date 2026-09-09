@@ -1,6 +1,12 @@
 {
   "badges": [
     {
+      "name": "3 Day Streak",
+      "code": "3-day-streak",
+      "image": "https://assets.tryhackme.com/img/badges/streak3.png",
+      "category": "milestones"
+    },
+    {
       "name": "cat linux.txt",
       "code": "terminaled",
       "image": "https://assets.tryhackme.com/img/badges/linux.png",

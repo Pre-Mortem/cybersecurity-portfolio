@@ -280,6 +280,28 @@
       "completion_date_source": "sync-date-fallback",
       "writeup": "writeups/tryhackme/theciatriad.md",
       "source": "authenticated-completed-rooms-api"
+    },
+    {
+      "name": "Windows Fundamentals 1",
+      "slug": "windowsfundamentals1xbx",
+      "url": "https://tryhackme.com/room/windowsfundamentals1xbx",
+      "difficulty": "Info",
+      "category": "",
+      "completed": "2026-09-09",
+      "completion_date_source": "sync-date-fallback",
+      "writeup": "writeups/tryhackme/windowsfundamentals1xbx.md",
+      "source": "authenticated-completed-rooms-api"
+    },
+    {
+      "name": "Windows Fundamentals 2",
+      "slug": "windowsfundamentals2x0x",
+      "url": "https://tryhackme.com/room/windowsfundamentals2x0x",
+      "difficulty": "Info",
+      "category": "",
+      "completed": "2026-09-09",
+      "completion_date_source": "sync-date-fallback",
+      "writeup": "writeups/tryhackme/windowsfundamentals2x0x.md",
+      "source": "authenticated-completed-rooms-api"
     }
   ]
 }
