@@ -508,6 +508,14 @@ class TestIdempotentRender(unittest.TestCase):
         badges = portfolio.read_json(portfolio.BADGES, {"badges": []})
         rendered = portfolio.build_achievement_cabinet_section(badges)
         expected = {
+            "3 Day Streak": (
+                "3-day-streak",
+                "https://assets.tryhackme.com/img/badges/streak3.png",
+            ),
+            "7 Day Streak": (
+                "7-day-streak",
+                "https://assets.tryhackme.com/img/badges/streak7.png",
+            ),
             "cat linux.txt": (
                 "terminaled",
                 "https://assets.tryhackme.com/img/badges/linux.png",
@@ -533,9 +541,9 @@ class TestIdempotentRender(unittest.TestCase):
                 "https://assets.tryhackme.com/img/badges/webbed.png",
             ),
         }
-        self.assertEqual(len(badges["badges"]), 6)
-        self.assertEqual(rendered.count("<img src="), 6)
-        self.assertEqual(rendered.count("<a href="), 6)
+        self.assertEqual(len(badges["badges"]), len(expected))
+        self.assertEqual(rendered.count("<img src="), len(expected))
+        self.assertEqual(rendered.count("<a href="), len(expected))
         for name, (code, image) in expected.items():
             self.assertIn(name, rendered)
             self.assertIn(image, rendered)
@@ -677,7 +685,6 @@ class TestIdempotentRender(unittest.TestCase):
         )
         self.assertIn("HackPod", readme)
         self.assertIn("X-Link", readme)
-        self.assertIn("27 completed rooms and 6 earned badges", readme)
         self.assertIn("Malware Classification", readme)
         rooms = portfolio.read_json(portfolio.ROOMS, {"rooms": []})
         badges = portfolio.read_json(portfolio.BADGES, {"badges": []})

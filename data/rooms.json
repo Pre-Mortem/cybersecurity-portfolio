@@ -313,6 +313,28 @@
       "completion_date_source": "sync-date-fallback",
       "writeup": "writeups/tryhackme/monitoringactivedirectory.md",
       "source": "authenticated-completed-rooms-api"
+    },
+    {
+      "name": "Pyramid Of Pain",
+      "slug": "pyramidofpainax",
+      "url": "https://tryhackme.com/room/pyramidofpainax",
+      "difficulty": "Easy",
+      "category": "",
+      "completed": "2026-10-20",
+      "completion_date_source": "sync-date-fallback",
+      "writeup": "writeups/tryhackme/pyramidofpainax.md",
+      "source": "authenticated-completed-rooms-api"
+    },
+    {
+      "name": "Security Analyst Intro",
+      "slug": "securityanalystintroda",
+      "url": "https://tryhackme.com/room/securityanalystintroda",
+      "difficulty": "Easy",
+      "category": "",
+      "completed": "2026-10-20",
+      "completion_date_source": "sync-date-fallback",
+      "writeup": "writeups/tryhackme/securityanalystintroda.md",
+      "source": "authenticated-completed-rooms-api"
     }
   ]
 }

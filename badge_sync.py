@@ -67,17 +67,40 @@ def extract_catalog(payload) -> dict[str, dict]:
     return catalog
 
 
-def build_badge(earned: dict, catalog: dict[str, dict]) -> dict | None:
+def build_badge(
+    earned: dict,
+    catalog: dict[str, dict],
+    existing: dict[str, dict] | None = None,
+) -> dict | None:
     slug = str(earned.get("name") or "").strip()
     if not slug:
         return None
+    existing_meta = (existing or {}).get(slug.lower(), {})
     meta = catalog.get(slug.lower(), {})
-    name = str(meta.get("title") or "").strip() or display_name(slug)
+    name = (
+        str(meta.get("title") or "").strip()
+        or str(existing_meta.get("name") or "").strip()
+        or display_name(slug)
+    )
     badge = {"name": name, "code": slug}
-    image = str(meta.get("image") or "").strip()
+    existing_image = str(existing_meta.get("image") or "").strip()
+    catalog_image = str(meta.get("image") or "").strip()
+    earned_image = str(earned.get("image") or "").strip()
+    image = catalog_image or existing_image
+    if not image and earned_image.startswith("https://assets.tryhackme.com/img/badges/"):
+        image = earned_image
+    if not image and re.match(r"^\d+-day-streak$", slug):
+        days = slug.split("-", 1)[0]
+        image = f"https://assets.tryhackme.com/img/badges/streak{days}.png"
     if image:
         badge["image"] = image
-    category = str(meta.get("category") or "").strip()
+
+    category = (
+        str(meta.get("category") or "").strip()
+        or str(existing_meta.get("category") or "").strip()
+    )
+    if not category and re.match(r"^\d+-day-streak$", slug):
+        category = "milestones"
     if category:
         badge["category"] = category
     return badge
@@ -182,9 +205,16 @@ def sync_badges(publish: bool) -> int:
             "Your saved login may have expired, or the site rate-limited the request."
         )
 
+    current_badges = read_json(BADGES, {"badges": []}).get("badges", [])
+    existing_map = {
+        str(b.get("code") or b.get("name") or "").strip().lower(): b
+        for b in current_badges
+        if isinstance(b, dict)
+    }
+
     badges = []
     for record in earned:
-        badge = build_badge(record, catalog)
+        badge = build_badge(record, catalog, existing_map)
         if badge:
             badges.append(badge)
 
@@ -192,8 +222,8 @@ def sync_badges(publish: bool) -> int:
     badges_data = {"badges": sorted(badge_map.values(), key=lambda item: item["name"].lower())}
     write_json(BADGES, badges_data)
 
-    rooms = read_json(ROOMS, {"rooms": []})
-    update_readme(render(profile, rooms, badges_data))
+    from portfolio import regenerate_readme
+    regenerate_readme()
 
     print(f"Found {len(badges_data['badges'])} earned badge(s).", flush=True)
     for badge in badges_data["badges"]:

@@ -20,15 +20,15 @@ Two completed NCFE Level 2 qualifications in cyber security principles and codin
 ## TryHackMe
 
 **Profile:** [PreMortem](https://tryhackme.com/p/PreMortem)<br>
-**Last local sync:** 9 September 2026, 13:07 UTC
+**Last local sync:** 20 October 2026, 05:43 UTC
 
 <div align="center">
 
 <table>
 <tr>
-<td align="center">&nbsp;<strong>Rooms Completed</strong>&nbsp;<br>30</td>
-<td align="center">&nbsp;<strong>Badges Earned</strong>&nbsp;<br>7</td>
-<td align="center">&nbsp;<strong>Easy</strong>&nbsp;<br>17</td>
+<td align="center">&nbsp;<strong>Rooms Completed</strong>&nbsp;<br>32</td>
+<td align="center">&nbsp;<strong>Badges Earned</strong>&nbsp;<br>8</td>
+<td align="center">&nbsp;<strong>Easy</strong>&nbsp;<br>19</td>
 <td align="center">&nbsp;<strong>Info</strong>&nbsp;<br>12</td>
 <td align="center">&nbsp;<strong>Medium</strong>&nbsp;<br>1</td>
 </tr>
@@ -40,6 +40,8 @@ Two completed NCFE Level 2 qualifications in cyber security principles and codin
 
 | Room | Difficulty | Completed |
 |---|---|---|
+| [Pyramid Of Pain](https://tryhackme.com/room/pyramidofpainax) | Easy | 2026-10-20 |
+| [Security Analyst Intro](https://tryhackme.com/room/securityanalystintroda) | Easy | 2026-10-20 |
 | [Windows Fundamentals 1](https://tryhackme.com/room/windowsfundamentals1xbx) | Info | 2026-09-09 |
 | [Windows Fundamentals 2](https://tryhackme.com/room/windowsfundamentals2x0x) | Info | 2026-09-09 |
 | [Monitoring Active Directory](https://tryhackme.com/room/monitoringactivedirectory) | Medium | 2026-09-09 |
@@ -86,19 +88,25 @@ A growing collection of achievements earned through completed TryHackMe rooms an
 </a>
 </td>
 <td align="center" width="130">
+<a href="https://tryhackme.com/PreMortem/badges/7-day-streak">
+<img src="https://assets.tryhackme.com/img/badges/streak7.png" alt="7 Day Streak" width="100"><br>
+<strong>7 Day Streak</strong>
+</a>
+</td>
+<td align="center" width="130">
 <a href="https://tryhackme.com/PreMortem/badges/terminaled">
 <img src="https://assets.tryhackme.com/img/badges/linux.png" alt="cat linux.txt" width="100"><br>
 <strong>cat linux.txt</strong>
 </a>
 </td>
+</tr>
+<tr>
 <td align="center" width="130">
 <a href="https://tryhackme.com/PreMortem/badges/first-4-rooms">
 <img src="https://assets.tryhackme.com/img/badges/firstfour.png" alt="First Four" width="100"><br>
 <strong>First Four</strong>
 </a>
 </td>
-</tr>
-<tr>
 <td align="center" width="130">
 <a href="https://tryhackme.com/PreMortem/badges/metasploitable">
 <img src="https://assets.tryhackme.com/img/badges/metasploit.png" alt="Metasploitable" width="100"><br>
@@ -111,14 +119,14 @@ A growing collection of achievements earned through completed TryHackMe rooms an
 <strong>Networking Nerd</strong>
 </a>
 </td>
+</tr>
+<tr>
 <td align="center" width="130">
 <a href="https://tryhackme.com/PreMortem/badges/intro-to-pentesting">
 <img src="https://assets.tryhackme.com/img/badges/introtooffensivesecurity.png" alt="Pentesting Principles" width="100"><br>
 <strong>Pentesting Principles</strong>
 </a>
 </td>
-</tr>
-<tr>
 <td align="center" width="130">
 <a href="https://tryhackme.com/PreMortem/badges/web-fund">
 <img src="https://assets.tryhackme.com/img/badges/webbed.png" alt="Webbed" width="100"><br>
@@ -145,7 +153,7 @@ _Portfolio progress milestones — a personal tracker, not official TryHackMe ba
 ✅<br><strong>25 Rooms</strong><br>Complete
 </td>
 <td align="center" width="120">
-🚧<br><strong>50 Rooms</strong><br>30 / 50
+🚧<br><strong>50 Rooms</strong><br>32 / 50
 </td>
 <td align="center" width="120">
 ⬜<br><strong>100 Rooms</strong><br>Upcoming

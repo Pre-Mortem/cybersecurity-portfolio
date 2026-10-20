@@ -25,7 +25,7 @@ security, and security tooling.
 | NCFE Level 2 Certificate in the Principles of Cyber Security | NCFE | 2 | Completed | 29 May 2025 |
 | Certificate in Cyber Security Practices | Think Employment | 3 | In progress | — |
 
-- **TryHackMe evidence:** 30 completed rooms and 7 earned badges
+- **TryHackMe evidence:** 32 completed rooms and 8 earned badges
 <!-- PROFILE-SNAPSHOT:END -->
 - **Key areas:** networking, Linux, web security, Python, security automation,
   embedded systems, and Android
@@ -153,15 +153,15 @@ Each skill below is tied to work recorded in this repository — completed train
 ## TryHackMe
 
 **Profile:** [PreMortem](https://tryhackme.com/p/PreMortem)<br>
-**Last local sync:** 9 September 2026, 13:07 UTC
+**Last local sync:** 20 October 2026, 05:43 UTC
 
 <div align="center">
 
 <table>
 <tr>
-<td align="center">&nbsp;<strong>Rooms Completed</strong>&nbsp;<br>30</td>
-<td align="center">&nbsp;<strong>Badges Earned</strong>&nbsp;<br>7</td>
-<td align="center">&nbsp;<strong>Easy</strong>&nbsp;<br>17</td>
+<td align="center">&nbsp;<strong>Rooms Completed</strong>&nbsp;<br>32</td>
+<td align="center">&nbsp;<strong>Badges Earned</strong>&nbsp;<br>8</td>
+<td align="center">&nbsp;<strong>Easy</strong>&nbsp;<br>19</td>
 <td align="center">&nbsp;<strong>Info</strong>&nbsp;<br>12</td>
 <td align="center">&nbsp;<strong>Medium</strong>&nbsp;<br>1</td>
 </tr>
@@ -177,6 +177,8 @@ Each skill below is tied to work recorded in this repository — completed train
 
 | Room | Difficulty | Completed |
 |---|---|---|
+| [Pyramid Of Pain](https://tryhackme.com/room/pyramidofpainax) | Easy | 2026-10-20 |
+| [Security Analyst Intro](https://tryhackme.com/room/securityanalystintroda) | Easy | 2026-10-20 |
 | [Windows Fundamentals 1](https://tryhackme.com/room/windowsfundamentals1xbx) | Info | 2026-09-09 |
 | [Windows Fundamentals 2](https://tryhackme.com/room/windowsfundamentals2x0x) | Info | 2026-09-09 |
 | [Monitoring Active Directory](https://tryhackme.com/room/monitoringactivedirectory) | Medium | 2026-09-09 |
@@ -223,19 +225,25 @@ Earned TryHackMe badges generated from the saved canonical badge data. Each badg
 </a>
 </td>
 <td align="center" width="130">
+<a href="https://tryhackme.com/PreMortem/badges/7-day-streak">
+<img src="https://assets.tryhackme.com/img/badges/streak7.png" alt="7 Day Streak" width="100"><br>
+<strong>7 Day Streak</strong>
+</a>
+</td>
+<td align="center" width="130">
 <a href="https://tryhackme.com/PreMortem/badges/terminaled">
 <img src="https://assets.tryhackme.com/img/badges/linux.png" alt="cat linux.txt" width="100"><br>
 <strong>cat linux.txt</strong>
 </a>
 </td>
+</tr>
+<tr>
 <td align="center" width="130">
 <a href="https://tryhackme.com/PreMortem/badges/first-4-rooms">
 <img src="https://assets.tryhackme.com/img/badges/firstfour.png" alt="First Four" width="100"><br>
 <strong>First Four</strong>
 </a>
 </td>
-</tr>
-<tr>
 <td align="center" width="130">
 <a href="https://tryhackme.com/PreMortem/badges/metasploitable">
 <img src="https://assets.tryhackme.com/img/badges/metasploit.png" alt="Metasploitable" width="100"><br>
@@ -248,14 +256,14 @@ Earned TryHackMe badges generated from the saved canonical badge data. Each badg
 <strong>Networking Nerd</strong>
 </a>
 </td>
+</tr>
+<tr>
 <td align="center" width="130">
 <a href="https://tryhackme.com/PreMortem/badges/intro-to-pentesting">
 <img src="https://assets.tryhackme.com/img/badges/introtooffensivesecurity.png" alt="Pentesting Principles" width="100"><br>
 <strong>Pentesting Principles</strong>
 </a>
 </td>
-</tr>
-<tr>
 <td align="center" width="130">
 <a href="https://tryhackme.com/PreMortem/badges/web-fund">
 <img src="https://assets.tryhackme.com/img/badges/webbed.png" alt="Webbed" width="100"><br>
@@ -282,7 +290,7 @@ _Portfolio progress milestones — a personal tracker, not official TryHackMe ba
 ✅<br><strong>25 Rooms</strong><br>Complete
 </td>
 <td align="center" width="120">
-🚧<br><strong>50 Rooms</strong><br>30 / 50
+🚧<br><strong>50 Rooms</strong><br>32 / 50
 </td>
 <td align="center" width="120">
 ⬜<br><strong>100 Rooms</strong><br>Upcoming
@@ -303,7 +311,7 @@ No completed reports are published yet. Reports will appear here only after thei
 These files relate to completed rooms, but the write-ups themselves are still working notes or templates and are not presented as completed reports.
 
 <details>
-<summary>30 lab notes and write-up drafts</summary>
+<summary>32 lab notes and write-up drafts</summary>
 
 - [Authentication Bypass](writeups/tryhackme/authenticationbypass.md)
 - [Careers in Cyber](writeups/tryhackme/careersincyber.md)
@@ -328,6 +336,8 @@ These files relate to completed rooms, but the write-ups themselves are still wo
 - [Packets &amp; Frames](writeups/tryhackme/packetsframes.md)
 - [Pentesting Fundamentals](writeups/tryhackme/pentestingfundamentals.md)
 - [Principles of Security](writeups/tryhackme/principlesofsecurity.md)
+- [Pyramid Of Pain](writeups/tryhackme/pyramidofpainax.md)
+- [Security Analyst Intro](writeups/tryhackme/securityanalystintroda.md)
 - [Starting Out In Cyber Sec](writeups/tryhackme/startingoutincybersec.md)
 - [Subdomain Enumeration](writeups/tryhackme/subdomainenumeration.md)
 - [The CIA Triad](writeups/tryhackme/theciatriad.md)
